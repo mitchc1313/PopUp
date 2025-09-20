@@ -66,8 +66,6 @@ function parseHTML(html) {
 function fetchText(url) { return fetch(url).then(r => { if (!r.ok) throw new Error(`${r.status} ${r.statusText}`); return r.text(); }); }
 function fetchJSON(url) { return fetch(url).then(r => { if (!r.ok) throw new Error(`${r.status} ${r.statusText}`); return r.json(); }); }
 // ---------- tiny helpers ----------
-
-const addStyle = css => { const s = document.createElement('style'); s.textContent = css; document.head.appendChild(s); };
 function unwrapAll(anchors) {
     anchors.forEach(a => { const frag = document.createDocumentFragment(); while (a.firstChild) frag.appendChild(a.firstChild); a.replaceWith(frag); });
 }
