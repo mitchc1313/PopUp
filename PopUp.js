@@ -1,3 +1,5 @@
+console.log("[PopUp] custom file loaded");
+
 var MFLPlayerPopupCurrentPID, MFLPlayerPopupTracker = new Array(),
 MFLPlayerPopupTeamNames = new Array(),
 MFLPlayerPopupOnloadContent = new Array(),
