@@ -1372,32 +1372,207 @@ $("#TeamDetails .team_roster_table td.player").each(function () {
 		catch((e) = >{
 			console.error("Error fetching biodata:", e);
 		});
-		var d = `$ {
-			baseURLDynamic
-		}
-		/${year}/options ? L = $ {
-			league_id
-		} & O = 16 & F = $ {
-			a
-		} & PRINTER = 1`;
-		fetch(d).then((e) = >e.text()).then((e) = >{
-			var t = $(e).find(".report tbody").contents();
-			$("#TeamDetails .team_schedule_table").html(t),
-			load_playerIcons ? $("body").find('.team_schedule_table a[class*="franchise_"]').each(function() {
-				var e = $(this).attr("class").substr($(this).attr("class").indexOf("franchise_") + 10, 4, );
-				try {
-					$(this).parent().css("white-space", "nowrap"),
-					$(this).parent().prepend("<div class='franTeam_" + e + "' title='" + franchiseDatabase["fid_" + e].name + "'></div>", ),
-					setTimeout(function() {
-						$(".team_schedule_table a").contents().unwrap();
-					},
-					1e3);
-				} catch(e) {}
-			}) : $(".team_schedule_table a").contents().unwrap();
-		}).
-		catch((e) = >{
-			console.error("Error:", e);
-		});
+// --- NEW: Build schedule from JSON instead of scraping PRINTER HTML ---
+async function buildFranchiseSchedule(frId) {
+  // Utility: safe fetch JSON
+  async function getJSON(url) {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(`Fetch failed ${r.status} ${r.statusText}`);
+    return r.json();
+  }
+
+  // 1) Pull full weekly results (scores + matchups) and schedule scaffolding
+  // weeklyResults gives played games; schedule gives matchups even before they’re played.
+  const weeklyResultsURL = `${baseURLDynamic}/${year}/export?TYPE=weeklyResults&L=${league_id}&JSON=1`;
+  const scheduleURL      = `${baseURLDynamic}/${year}/export?TYPE=schedule&L=${league_id}&JSON=1`;
+  const franchisesURL    = `${baseURLDynamic}/${year}/export?TYPE=league&L=${league_id}&JSON=1`;
+
+  let [resultsJson, scheduleJson, leagueJson] = await Promise.all([
+    getJSON(weeklyResultsURL).catch(()=>({})),
+    getJSON(scheduleURL).catch(()=>({})),
+    getJSON(franchisesURL).catch(()=>({}))
+  ]);
+
+  // Build quick maps
+  const fid = String(frId);
+  const franchiseMap = {};
+  try {
+    (leagueJson?.league?.franchises?.franchise || []).forEach(f=>{
+      franchiseMap[f.id] = f;
+    });
+  } catch(_) {}
+
+  // Flatten schedule into list of entries for this franchise
+  const rows = [];
+  try {
+    const weeks = scheduleJson?.schedule?.weeklySchedule?.week || [];
+    weeks.forEach(weekObj=>{
+      const week = Number(weekObj.week);
+      (weekObj.matchup || []).forEach(m=>{
+        const { franchise: pair } = m;
+        if (!pair || pair.length < 2) return;
+
+        const f1 = pair[0]; const f2 = pair[1];
+        const home = (m.home || "");
+        let host = f1.id, guest = f2.id;
+
+        // MFL marks home team by id string
+        if (home && home === f2.id) { host = f2.id; guest = f1.id; }
+
+        const isHome = host === fid;
+        if (f1.id !== fid && f2.id !== fid) return;
+
+        const oppId = (f1.id === fid) ? f2.id : f1.id;
+
+        rows.push({
+          week,
+          isHome,
+          oppId,
+          // fill in later once we merge scores
+          pf: null,
+          pa: null,
+          result: null,
+          boxscoreUrl: `${baseURLDynamic}/${year}/home/${league_id}?MODULE=LS&W=${week}` // lightweight link into live scoring / box
+        });
+      });
+    });
+  } catch(_) {}
+
+  // Merge in results (PF/PA + W/L/T)
+  try {
+    const allWeeks = resultsJson?.weeklyResults?.matchup || [];
+    allWeeks.forEach(m=>{
+      const week = Number(m.week);
+      const f1 = m.franchise?.[0]; const f2 = m.franchise?.[1];
+      if (!f1 || !f2) return;
+
+      const g = {
+        week,
+        a: { id: f1.id, pf: Number(f1.score) || 0 },
+        b: { id: f2.id, pf: Number(f2.score) || 0 }
+      };
+
+      // See if our team is in this game
+      let idx = rows.findIndex(r => r.week === week && (r.oppId === g.a.id || r.oppId === g.b.id));
+      if (idx === -1) return;
+
+      const r = rows[idx];
+      const myScore  = (g.a.id === fid) ? g.a.pf : g.b.pf;
+      const oppScore = (g.a.id === fid) ? g.b.pf : g.a.pf;
+
+      r.pf = myScore;
+      r.pa = oppScore;
+
+      r.result = (myScore > oppScore) ? "W" : (myScore < oppScore) ? "L" : "T";
+    });
+  } catch(_) {}
+
+  // Sort by week
+  rows.sort((a,b)=>a.week-b.week);
+
+  // 2) Render table
+  const $tbody = $(`
+    <tr>
+      <th class="week">Week</th>
+      <th class="matchup">Opponent</th>
+      <th class="ha">H/A</th>
+      <th class="result">Result</th>
+      <th class="pf">PF</th>
+      <th class="pa">PA</th>
+      <th class="tools">Links</th>
+    </tr>
+  `);
+
+  // helper to opponent cell with optional logo + weather
+  function opponentCell(oppId) {
+    const opp = franchiseMap[oppId];
+    const oppName = (opp?.name) ? opp.name : (`Franchise ${oppId}`);
+    let html = `<div class="oppCell" style="display:flex;align-items:center;gap:.5rem">`;
+
+    if (load_playerIcons) {
+      // reuse your .franTeam_<id> icon CSS
+      html += `<div class="franTeam_${oppId}" title="${oppName}" style="flex:0 0 auto"></div>`;
+    }
+
+    html += `<div class="oppInfo" style="display:flex;align-items:center;gap:.5rem">
+               <span class="oppName">${oppName}</span>
+               <button type="button" class="wxBtn" data-opp="${oppId}" title="View Weather" style="font-size:.8rem;padding:.15rem .4rem">Weather</button>
+             </div>`;
+    html += `</div>`;
+    return html;
+  }
+
+  // Create rows
+  rows.forEach((r,i)=>{
+    const trClass = (i%2) ? "eventablerow" : "oddtablerow";
+    const resultBadge = r.result ? `<span class="${r.result==='W'?'success':r.result==='L'?'warning':''}">${r.result}</span>` : "<i>—</i>";
+    const pf = (r.pf==null) ? "—" : r.pf.toFixed(2).replace(/\.00$/,'');
+    const pa = (r.pa==null) ? "—" : r.pa.toFixed(2).replace(/\.00$/,'');
+
+    $tbody.append(`
+      <tr class="${trClass}">
+        <td class="week"      style="text-align:center!important">${r.week}</td>
+        <td class="matchup">  ${opponentCell(r.oppId)}</td>
+        <td class="ha"        style="text-align:center!important">${r.isHome ? "Home" : "Away"}</td>
+        <td class="result"    style="text-align:center!important">${resultBadge}</td>
+        <td class="pf"        style="text-align:center!important">${pf}</td>
+        <td class="pa"        style="text-align:center!important">${pa}</td>
+        <td class="tools"     style="text-align:center!important">
+          <a href="${r.boxscoreUrl}" target="_blank">Box</a>
+        </td>
+      </tr>
+    `);
+  });
+
+  // Handle teams with no schedule found (byes/empty leagues)
+  if (!rows.length) {
+    $tbody.append(`<tr class="oddtablerow"><td colspan="7" style="text-align:center!important"><i>No scheduled games</i></td></tr>`);
+  }
+
+  // Inject into the popup
+  $("#TeamDetails .team_schedule_table").html($tbody);
+
+  // Hook up Weather buttons (uses your existing lu_popup_weatherPopup)
+  // We try to infer opponent NFL abbreviation from the franchise abbrev if available; if not, we pass the franchise id.
+  $("#TeamDetails .team_schedule_table .wxBtn").off("click").on("click", function(){
+    const oppId = $(this).data("opp");
+    // Try a best-effort abbrev guess from franchiseDatabase if you have one, else fall back to oppId.
+    let nflAbbrev = "";
+    try { nflAbbrev = (franchiseDatabase?.[`fid_${oppId}`]?.abbrev || "").toUpperCase(); } catch(_) {}
+    if (!nflAbbrev || nflAbbrev.length>3) nflAbbrev = String(oppId); // fallback
+    const weatherLink = "https://weather.com"; // Placeholder; your lu_popup_weatherPopup takes (siteKey, url)
+    lu_popup_weatherPopup(nflAbbrev, weatherLink);
+  });
+
+  // Optional: strip anchors to plain text if icons are rendered later
+  if (!load_playerIcons) {
+    $(".team_schedule_table a").each(function(){ /* keep links (boxscore), so do nothing */ });
+  }
+}
+
+// call it where you previously fetched O=16
+buildFranchiseSchedule(a).catch(err=>{
+  console.error("Schedule builder failed, falling back to PRINTER HTML:", err);
+  // Fallback to your original behavior if JSON fails for any reason
+  const d = `${baseURLDynamic}/${year}/options?L=${league_id}&O=16&F=${a}&PRINTER=1`;
+  fetch(d).then(r=>r.text()).then(e=>{
+    const t = $(e).find(".report tbody").contents();
+    $("#TeamDetails .team_schedule_table").html(t);
+    if (load_playerIcons) {
+      $("body").find('.team_schedule_table a[class*="franchise_"]').each(function(){
+        const e = $(this).attr("class").substr($(this).attr("class").indexOf("franchise_")+10,4);
+        try {
+          $(this).parent().css("white-space","nowrap");
+          $(this).parent().prepend("<div class='franTeam_"+e+"' title='"+franchiseDatabase["fid_"+e].name+"'></div>");
+          setTimeout(function(){ $(".team_schedule_table a").contents().unwrap(); }, 1000);
+        } catch(e){}
+      });
+    } else {
+      $(".team_schedule_table a").contents().unwrap();
+    }
+  }).catch(e=>console.error("Fallback schedule fetch failed:", e));
+});
+
 		var c = `$ {
 			baseURLDynamic
 		}
