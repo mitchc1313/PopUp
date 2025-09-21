@@ -80,6 +80,25 @@ function on(parent, event, selector, handler) {
     });
 }
 
+
+// ===============================
+//  Article popup
+// ===============================
+function MFLPlayerPopupArticleSetup(html, ageText, source) {
+    qs("#MFLPlayerPopupContainer")?.classList.add("MFLPlayerPopupArticleContainer");
+    show(qs("#MFLPlayerPopupOverlay"));
+    show(qs("#MFLPlayerPopupContainer #MFLPlayerPopupLoading"));
+    hide(qs("#MFLPlayerPopupLoaded"));
+    hide(qs("#MFLPlayerPopupArticleLoaded"));
+    setHTML(qs("#MFLPlayerPopupName"), `Article Posted ${ageText} Ago`);
+    show(qs("#MFLPlayerPopupContainer"));
+    setTimeout(() => MFLPlayerPopupArticlePopulate?.(html, ageText, source), 200);
+    hide(qs(".teamdetailsWrap"));
+    hide(qs("#TeamDetails"));
+  
+    const art = qs("#MFLPlayerPopupArticleLoaded");
+    try { bodyScrollLock?.disableBodyScroll(art); } catch (_) { /* noop */ }
+  }
 // ===== Menu icons injection (initial jQuery line) =====
 (function injectMenuIcons() {
     const firstLi = document.querySelector('.myfantasyleague_menu ul li:nth-child(1)');
@@ -544,24 +563,7 @@ sd?.classList.remove("overview_details_table");
 qsa("a").forEach(a => a.classList?.remove?.("dblClicks"));
 
 
-// ===============================
-//  Article popup
-// ===============================
-function MFLPlayerPopupArticleSetup(html, ageText, source) {
-  qs("#MFLPlayerPopupContainer")?.classList.add("MFLPlayerPopupArticleContainer");
-  show(qs("#MFLPlayerPopupOverlay"));
-  show(qs("#MFLPlayerPopupContainer #MFLPlayerPopupLoading"));
-  hide(qs("#MFLPlayerPopupLoaded"));
-  hide(qs("#MFLPlayerPopupArticleLoaded"));
-  setHTML(qs("#MFLPlayerPopupName"), `Article Posted ${ageText} Ago`);
-  show(qs("#MFLPlayerPopupContainer"));
-  setTimeout(() => MFLPlayerPopupArticlePopulate?.(html, ageText, source), 200);
-  hide(qs(".teamdetailsWrap"));
-  hide(qs("#TeamDetails"));
 
-  const art = qs("#MFLPlayerPopupArticleLoaded");
-  try { bodyScrollLock?.disableBodyScroll(art); } catch (_) { /* noop */ }
-}
 }
 
 // ===============================
