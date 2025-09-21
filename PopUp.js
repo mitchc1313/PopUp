@@ -55,6 +55,11 @@ window.MFLPlayerPopupIncludeProjections ??= true;
 const qs  = (sel, root=document) => root.querySelector(sel);
 const qsa = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
+// --- tiny selector aliases (add at the very top, once) ---
+const $  = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+
 function setHTML(el, html){ if (el) el.innerHTML = html; }
 function show(el){ if (el) el.style.display = ''; }
 function hide(el){ if (el) el.style.display = 'none'; }
