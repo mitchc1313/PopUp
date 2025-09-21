@@ -74,12 +74,6 @@ function appendHTML(parent, html) {
     parent.appendChild(tpl.content);
 }
 
-function addStyle(css) {
-    const s = document.createElement('style');
-    s.textContent = css;
-    document.head.appendChild(s);
-}
-
 function on(parent, event, selector, handler) {
     parent.addEventListener(event, e => {
         const target = e.target.closest(selector);
