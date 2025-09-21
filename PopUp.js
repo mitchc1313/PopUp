@@ -1,4 +1,3 @@
-
 // ===== Globals (kept the same names) =====
 let MFLPlayerPopupCurrentPID;
 let MFLPlayerPopupTracker = [];
@@ -54,11 +53,6 @@ window.MFLPlayerPopupIncludeProjections ??= true;
 // Safe, vanilla helpers (drop these once at the top)
 const qs  = (sel, root=document) => root.querySelector(sel);
 const qsa = (sel, root=document) => Array.from(root.querySelectorAll(sel));
-
-// --- tiny selector aliases (add at the very top, once) ---
-const $  = (sel, root = document) => root.querySelector(sel);
-const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
-
 
 function setHTML(el, html){ if (el) el.innerHTML = html; }
 function show(el){ if (el) el.style.display = ''; }
@@ -146,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .espn_body_player td.player_photo{text-align:center}
     `);
 
-        $$('#body_player td.player_photo img').forEach(img => {
+        qsa('#body_player td.player_photo img').forEach(img => {
             const try1 = pref;
             const try2 = `//www.myfantasyleague.com/player_photos_2014/${pid}_thumb.jpg`;
             const try3 = `https://www.mflscripts.com/playerImages_80x107/free_agent.png`;
@@ -174,9 +168,9 @@ document.addEventListener('DOMContentLoaded', () => {
     .espnImg td{display:table;margin:0 auto!important}
   `);
 
-    $$('#body_options_185,#options_177,#options_207,#fantasy_articles,#fantasy_recap,#fantasy_preview')
+    qsa('#body_options_185,#options_177,#options_207,#fantasy_articles,#fantasy_recap,#fantasy_preview')
         .forEach(root => {
-            $$('img.articlepicture[src*="_thumb"]', root).forEach(img => {
+            qsa('img.articlepicture[src*="_thumb"]', root).forEach(img => {
                 const m = img.getAttribute('src').match(/\/(\d+).*\.jpg$/) || [];
                 const id = m[1];
                 if (!id) return;
@@ -245,136 +239,198 @@ function getCookie(name) {
     return document.cookie.split(';').map(s => s.trim()).find(s => s.startsWith(key))?.slice(key.length) ?? '';
 }
 
-// ===== Popup Container (vanilla) =====
 function MFLPlayerPopupCreateContainer() {
     appendHTML(document.body, `
-    <div id="isMediaContainer" style="display:none"><div class="isMedia"></div></div>
-    <div id="MFLPlayerPopupOverlay"></div>
-    <div id="MFLPlayerPopupContainer" style="left:0!important;right:0!important;top:0!important;bottom:0!important;margin:auto">
-      <caption class="MFLPlayerPopupHeaderCaption"><span id="MFLPlayerPopupName"></span></caption>
-      <span id="MFLPlayerPopupClose">X</span>
-      <div id="MFLPlayerPopupLoading"><center>Loading Content . . .<br><br><div class="MFLPlayerPopupLoader"></div></center></div>
-      <div id="MFLPlayerPopupArticleLoaded"></div>
-      <div id="MFLPlayerPopupLoaded">
-        <div id="MFLPlayerPopupHeader"></div>
-        <div class="MFLPopTabWrap">
-          <ul class="MFLPlayerPopupTab"></ul>
+      <div id="isMediaContainer" style="display:none"><div class="isMedia"></div></div>
+      <div id="MFLPlayerPopupOverlay"></div>
+      <div id="MFLPlayerPopupContainer" style="left:0!important;right:0!important;top:0!important;bottom:0!important;margin:auto">
+        <div class="MFLPlayerPopupHeaderCaption"><span id="MFLPlayerPopupName"></span></div>
+        <span id="MFLPlayerPopupClose" role="button" aria-label="Close">X</span>
+  
+        <div id="MFLPlayerPopupLoading" class="MFLPlayerPopupLoading"
+             style="display:flex;align-items:center;justify-content:center;flex-direction:column">
+          Loading Content . . .<br><br><div class="MFLPlayerPopupLoader"></div>
         </div>
-        <div id="MFLPlayerPopupLinks"></div>
-        <div id="MFLPlayerPopupNews" class="MFLPlayerPopupTabContent"></div>
-        <div id="MFLPlayerPopupBio" class="MFLPlayerPopupTabContent">Bio Table</div>
-        <div id="MFLPlayerPopupStatsHistory" class="MFLPlayerPopupTabContent">Stats History Table</div>
-        <div id="MFLPlayerPopupStats" class="MFLPlayerPopupTabContent">Stats Table</div>
-        ${MFLPlayerPopupIncludeProjections ? `
-          <div id="MFLPlayerPopupProjections" class="MFLPlayerPopupTabContent">
-            <div id="MFLPlayerPopupLoading"><center>Loading Content . . .<br><br><div class="MFLPlayerPopupLoader"></div></center></div>
-          </div>` : ``}
-        <div id="MFLPlayerPopupTrades" class="MFLPlayerPopupTabContent">No Data</div>
-        <div id="MFLPlayerPopupCommishMessage" class="MFLPlayerPopupTabContent">No Data</div>
-        <div id="MFLPlayerPopupReminders" class="MFLPlayerPopupTabContent">No Data</div>
-        <div id="MFLPlayerPopupMessages" class="MFLPlayerPopupTabContent">No Data</div>
+  
+        <div id="MFLPlayerPopupArticleLoaded"></div>
+        <div id="MFLPlayerPopupLoaded">
+          <div id="MFLPlayerPopupHeader"></div>
+          <div class="MFLPopTabWrap">
+            <ul class="MFLPlayerPopupTab"></ul>
+          </div>
+          <div id="MFLPlayerPopupLinks"></div>
+          <div id="MFLPlayerPopupNews" class="MFLPlayerPopupTabContent"></div>
+          <div id="MFLPlayerPopupBio" class="MFLPlayerPopupTabContent">Bio Table</div>
+          <div id="MFLPlayerPopupStatsHistory" class="MFLPlayerPopupTabContent">Stats History Table</div>
+          <div id="MFLPlayerPopupStats" class="MFLPlayerPopupTabContent">Stats Table</div>
+  
+          ${MFLPlayerPopupIncludeProjections ? `
+            <div id="MFLPlayerPopupProjections" class="MFLPlayerPopupTabContent">
+              <div id="MFLPlayerPopupLoadingProjections" class="MFLPlayerPopupLoading"
+                   style="display:flex;align-items:center;justify-content:center;flex-direction:column">
+                Loading Content . . .<br><br><div class="MFLPlayerPopupLoader"></div>
+              </div>
+            </div>` : ``}
+  
+          <div id="MFLPlayerPopupTrades" class="MFLPlayerPopupTabContent">No Data</div>
+          <div id="MFLPlayerPopupCommishMessage" class="MFLPlayerPopupTabContent">No Data</div>
+          <div id="MFLPlayerPopupReminders" class="MFLPlayerPopupTabContent">No Data</div>
+          <div id="MFLPlayerPopupMessages" class="MFLPlayerPopupTabContent">No Data</div>
+        </div>
       </div>
-    </div>
-  `);
-
-    // build tabs (outside #TeamDetails)
-    const tabs = document.querySelectorAll('.MFLPlayerPopupTab:not(#TeamDetails .MFLPlayerPopupTab)');
-    tabs.forEach(ul => {
-        appendHTML(ul, `
-      <li class="MFLPlayerPopupPlayerTabs"><a href="javascript:void(0)" class="MFLPlayerPopupTabLinks" id="MFLPlayerPopupTabLinksNews" data-target="MFLPlayerPopupNews"><span class="pt-hide">Player</span> News</a></li>
-      <li class="MFLPlayerPopupPlayerTabs" id="MFLPlayerPopupBioTab"><a href="javascript:void(0)" class="MFLPlayerPopupTabLinks" data-target="MFLPlayerPopupBio">Bio</a></li>
-      <li class="MFLPlayerPopupPlayerTabs"><a href="javascript:void(0)" class="MFLPlayerPopupTabLinks" data-target="MFLPlayerPopupStats"><span class="pt-hide">${year}</span> Stats</a></li>
-      ${MFLPlayerPopupIncludeProjections ? `<li class="MFLPlayerPopupPlayerTabs"><a href="javascript:void(0)" class="MFLPlayerPopupTabLinks" data-target="MFLPlayerPopupProjections">Proj.</a></li>` : ''}
-      <li class="MFLPlayerPopupPlayerTabs"><a href="javascript:void(0)" class="MFLPlayerPopupTabLinks" data-target="MFLPlayerPopupStatsHistory">Career <span class="pt-hide">Stats</span></a></li>
-      ${(MFLPopupEnableTrade || MFLPopupEnableTradePoll) ? `<li class="MFLPlayerPopupNotificationTabs"><a href="javascript:void(0)" class="MFLPlayerPopupTabLinks" id="MFLPlayerPopupTabLinksTrades" data-target="MFLPlayerPopupTrades">Trades</a></li>` : ''}
-      ${(MFLPopupEnableCommishMessage && MFLPopupCommishMessage !== "") ? `<li class="MFLPlayerPopupNotificationTabs"><a href="javascript:void(0)" class="MFLPlayerPopupTabLinks" id="MFLPlayerPopupTabLinksCommishMessage" data-target="MFLPlayerPopupCommishMessage">Commish Msg</a></li>` : ''}
-      ${MFLPopupEnableReminders ? `<li class="MFLPlayerPopupNotificationTabs"><a href="javascript:void(0)" class="MFLPlayerPopupTabLinks" id="MFLPlayerPopupTabLinksReminders" data-target="MFLPlayerPopupReminders">Reminders</a></li>` : ''}
-      ${MFLPopupEnableMessages ? `<li class="MFLPlayerPopupNotificationTabs"><a href="javascript:void(0)" class="MFLPlayerPopupTabLinks" id="MFLPlayerPopupTabLinksMessages" data-target="MFLPlayerPopupMessages">Messages</a></li>` : ''}
     `);
-    });
+  
+  
 
-    // close overlay
-    qs('#MFLPlayerPopupOverlay')?.addEventListener('click', () => MFLPlayerPopupClose());
-
-    // tab switching (vanilla)
-    on(document, 'click', '.MFLPlayerPopupTabLinks', (e, el) => {
-        e.preventDefault();
-        const targetId = el.dataset.target;
-        if (!targetId) return;
-        $$('.MFLPlayerPopupTabContent').forEach(div => (div.style.display = 'none'));
-        $$('.MFLPlayerPopupTabLinks').forEach(a => a.classList.remove('active'));
-        el.classList.add('active');
-        const target = document.getElementById(targetId);
-        if (target) {
-            target.style.display = 'block';
-            target.classList.add('active_div_tab_scroll');
-            try { bodyScrollLock?.disableBodyScroll(target); } catch (_) { }
-            if (targetId === 'MFLPlayerPopupProjections') {
-                setTimeout(() => { try { MFLPlayerPopupPopulateProjections?.(); } catch (_) { } }, 5);
-            }
-        }
+   // build tabs (outside #TeamDetails)
+{
+    const allTabs = qsa('.MFLPlayerPopupTab');
+    const tabs = allTabs.filter(ul => !ul.closest('#TeamDetails'));
+    tabs.forEach(ul => {
+      appendHTML(ul, `
+        <li class="MFLPlayerPopupPlayerTabs">
+          <a href="javascript:void(0)" class="MFLPlayerPopupTabLinks" id="MFLPlayerPopupTabLinksNews" data-target="MFLPlayerPopupNews">
+            <span class="pt-hide">Player</span> News
+          </a>
+        </li>
+        <li class="MFLPlayerPopupPlayerTabs" id="MFLPlayerPopupBioTab">
+          <a href="javascript:void(0)" class="MFLPlayerPopupTabLinks" data-target="MFLPlayerPopupBio">Bio</a>
+        </li>
+        <li class="MFLPlayerPopupPlayerTabs">
+          <a href="javascript:void(0)" class="MFLPlayerPopupTabLinks" data-target="MFLPlayerPopupStats">
+            <span class="pt-hide">${year}</span> Stats
+          </a>
+        </li>
+        ${MFLPlayerPopupIncludeProjections ? `
+          <li class="MFLPlayerPopupPlayerTabs">
+            <a href="javascript:void(0)" class="MFLPlayerPopupTabLinks" data-target="MFLPlayerPopupProjections">Proj.</a>
+          </li>` : ''}
+        <li class="MFLPlayerPopupPlayerTabs">
+          <a href="javascript:void(0)" class="MFLPlayerPopupTabLinks" data-target="MFLPlayerPopupStatsHistory">Career <span class="pt-hide">Stats</span></a>
+        </li>
+        ${(MFLPopupEnableTrade || MFLPopupEnableTradePoll) ? `
+          <li class="MFLPlayerPopupNotificationTabs">
+            <a href="javascript:void(0)" class="MFLPlayerPopupTabLinks" id="MFLPlayerPopupTabLinksTrades" data-target="MFLPlayerPopupTrades">Trades</a>
+          </li>` : ''}
+        ${(MFLPopupEnableCommishMessage && MFLPopupCommishMessage !== "") ? `
+          <li class="MFLPlayerPopupNotificationTabs">
+            <a href="javascript:void(0)" class="MFLPlayerPopupTabLinks" id="MFLPlayerPopupTabLinksCommishMessage" data-target="MFLPlayerPopupCommishMessage">Commish Msg</a>
+          </li>` : ''}
+        ${MFLPopupEnableReminders ? `
+          <li class="MFLPlayerPopupNotificationTabs">
+            <a href="javascript:void(0)" class="MFLPlayerPopupTabLinks" id="MFLPlayerPopupTabLinksReminders" data-target="MFLPlayerPopupReminders">Reminders</a>
+          </li>` : ''}
+        ${MFLPopupEnableMessages ? `
+          <li class="MFLPlayerPopupNotificationTabs">
+            <a href="javascript:void(0)" class="MFLPlayerPopupTabLinks" id="MFLPlayerPopupTabLinksMessages" data-target="MFLPlayerPopupMessages">Messages</a>
+          </li>` : ''}
+      `);
     });
+  }
+  
+  // close overlay
+  qs('#MFLPlayerPopupOverlay')?.addEventListener('click', () => MFLPlayerPopupClose());
+  
+  // tab switching (vanilla)
+  on(document, 'click', '.MFLPlayerPopupTabLinks', (e, el) => {
+    e.preventDefault();
+    const targetId = el.dataset.target;
+    if (!targetId) return;
+  
+    // replace $$ with qsa
+    qsa('.MFLPlayerPopupTabContent').forEach(div => (div.style.display = 'none'));
+    qsa('.MFLPlayerPopupTabLinks').forEach(a => a.classList.remove('active'));
+  
+    el.classList.add('active');
+  
+    const target = document.getElementById(targetId);
+    if (target) {
+      target.style.display = 'block';
+      target.classList.add('active_div_tab_scroll');
+      try { bodyScrollLock?.disableBodyScroll(target); } catch (_) { /* noop */ }
+  
+      if (targetId === 'MFLPlayerPopupProjections') {
+        setTimeout(() => { try { MFLPlayerPopupPopulateProjections?.(); } catch (_) {} }, 5);
+      }
+    }
+  });
+  
 }
 
 function MFLPlayerPopupClose() {
-    qs('#MFLPlayerPopupOverlay')?.setAttribute('style', 'display:none');
-    qs('#MFLPlayerPopupContainer')?.setAttribute('style', 'display:none');
-    $$('.MFLPlayerPopupTabContent').forEach(d => d.style.display = 'none');
-    qs('#MFLPlayerPopupContainer')?.classList.remove('MFLPlayerPopupArticleContainer', 'MFLPlayerPopupNotificationContainer');
-    try { bodyScrollLock?.clearAllBodyScrollLocks(); } catch (e) { }
-    $$('.MFLPlayerPopupTabContent').forEach(d => d.classList.remove('active_div_tab_scroll'));
-    $$('.MFLPlayerPopupPlayerTabs a,.MFLPlayerPopupNotificationTabs a')
-        .filter(a => !a.closest('#TeamDetails .MFLPlayerPopupPlayerTabs'))
-        .forEach(a => a.classList.remove('active'));
-}
-
-// (kept but simplified) index check
-function includes(arr, item) { return Array.isArray(arr) ? arr.includes(item) : false; }
-
-// Build Team name dictionary
-function MFLPlayerPopupSetupTeamNames() {
+    const overlay   = qs('#MFLPlayerPopupOverlay');
+    const container = qs('#MFLPlayerPopupContainer');
+  
+    if (overlay)   overlay.style.display = 'none';
+    if (container) container.style.display = 'none';
+  
+    qsa('.MFLPlayerPopupTabContent').forEach(d => {
+      d.style.display = 'none';
+      d.classList.remove('active_div_tab_scroll');
+    });
+  
+    container?.classList.remove('MFLPlayerPopupArticleContainer', 'MFLPlayerPopupNotificationContainer');
+  
+    try { bodyScrollLock?.clearAllBodyScrollLocks(); } catch (_) {}
+  
+    // remove 'active' from tabs outside #TeamDetails
+    qsa('.MFLPlayerPopupPlayerTabs a, .MFLPlayerPopupNotificationTabs a')
+      .filter(a => !a.closest('#TeamDetails .MFLPlayerPopupPlayerTabs'))
+      .forEach(a => a.classList.remove('active'));
+  }
+  
+  // (kept but simplified) index check
+  function includes(arr, item) { return Array.isArray(arr) ? arr.includes(item) : false; }
+  
+  // Build Team name dictionary
+  function MFLPlayerPopupSetupTeamNames() {
     for (const k in franchiseDatabase) {
-        if (k !== 'fid_0000' && Object.prototype.hasOwnProperty.call(franchiseDatabase, k)) {
-            const f = franchiseDatabase[k];
-            MFLPlayerPopupTeamNames[f.name] = { id: f.id, abbrev: f.abbrev };
-        }
+      if (k !== 'fid_0000' && Object.prototype.hasOwnProperty.call(franchiseDatabase, k)) {
+        const f = franchiseDatabase[k];
+        MFLPlayerPopupTeamNames[f.name] = { id: f.id, abbrev: f.abbrev };
+      }
     }
-}
-
-// Expand “…More” news
-async function MFLPlayerPopupMoreNews(path, targetId) {
+  }
+  
+  // Expand “…More” news
+  async function MFLPlayerPopupMoreNews(path, targetId) {
     try {
-        const res = await fetch(`${baseURLDynamic}/${year}/${path}`);
-        const html = await res.text();
-        const temp = document.createElement('div');
-        temp.innerHTML = html;
-        const rows = temp.querySelectorAll('.report tr');
-        let i = 0, content = '';
-        rows.forEach(tr => {
-            if (i === 1) {
-                // remove links but keep text
-                tr.querySelectorAll('td a').forEach(a => {
-                    const span = document.createElement('span');
-                    span.innerHTML = a.innerHTML;
-                    a.replaceWith(span);
-                });
-                let inner = tr.querySelector('td')?.innerHTML ?? '';
-                const idx1 = inner.indexOf('Article Link');
-                if (idx1 > 0) inner = inner.substring(0, idx1 - 2);
-                const idx2 = inner.indexOf('Roto Pass from');
-                if (idx2 > 0) inner = inner.substring(0, idx2 - 3);
-                content = inner;
-            }
-            i++;
-        });
-        if (content) {
-            const tgt = document.getElementById(targetId);
-            if (tgt) tgt.innerHTML = content;
+      const res  = await fetch(`${baseURLDynamic}/${year}/${path}`);
+      const html = await res.text();
+  
+      const temp = document.createElement('div');
+      temp.innerHTML = html;
+  
+      const rows = temp.querySelectorAll('.report tr');
+      let i = 0, content = '';
+  
+      rows.forEach(tr => {
+        if (i === 1) {
+          // remove links but keep text
+          tr.querySelectorAll('td a').forEach(a => {
+            const span = document.createElement('span');
+            span.innerHTML = a.innerHTML;
+            a.replaceWith(span);
+          });
+          let inner = tr.querySelector('td')?.innerHTML ?? '';
+          const idx1 = inner.indexOf('Article Link');
+          if (idx1 > 0) inner = inner.substring(0, idx1 - 2);
+          const idx2 = inner.indexOf('Roto Pass from');
+          if (idx2 > 0) inner = inner.substring(0, idx2 - 3);
+          content = inner;
         }
+        i++;
+      });
+  
+      if (content) {
+        const tgt = document.getElementById(targetId);
+        if (tgt) tgt.innerHTML = content;
+      }
     } catch (err) {
-        console.error('MoreNews error:', err);
+      console.error('MoreNews error:', err);
     }
-}
+  }
+  
 
 // expose needed fns to window (to match old inline onclick usage)
 window.MFLPlayerPopupCreateContainer = MFLPlayerPopupCreateContainer;
@@ -438,49 +494,74 @@ function MFLPlayerPopupSetup(pid, fallbackText) {
         } catch { }
     }
 
-    // Mirror the old UI updates
-    show(qs("#MFLPlayerPopupOverlay"));
-    show(qs("#MFLPlayerPopupContainer #MFLPlayerPopupLoading"));
-    $$(".MFLPlayerPopupPlayerTabs:not(#TeamDetails .MFLPlayerPopupPlayerTabs)").forEach(li => li.style.display = "table-cell");
-    qs("#MFLPlayerPopupBioTab")?.removeAttribute("style");
-    $$(".MFLPlayerPopupNotificationTabs").forEach(li => li.style.display = "none");
-    if (MFLPopupOmitLinks) hide(qs("#MFLPlayerPopupLinks")); else show(qs("#MFLPlayerPopupLinks"));
-    hide(qs("#MFLPlayerPopupLoaded"));
-    hide(qs("#MFLPlayerPopupArticleLoaded"));
-    setHTML(qs("#MFLPlayerPopupName"), headerName);
-    show(qs("#MFLPlayerPopupContainer"));
+   // Mirror the old UI updates
+show(qs("#MFLPlayerPopupOverlay"));
+show(qs("#MFLPlayerPopupContainer #MFLPlayerPopupLoading"));
 
-    // kick off content population a tick later
-    setTimeout(() => MFLPlayerPopupPopulate(pid, fullname, team, pos), 200);
+// Select all tabs, then exclude those inside #TeamDetails
+qsa(".MFLPlayerPopupPlayerTabs")
+  .filter(li => !li.closest("#TeamDetails"))
+  .forEach(li => { li.style.display = "table-cell"; });
 
-    // hide other overlays/cleanup
-    hide(qs(".teamdetailsWrap")); hide(qs("#TeamDetails"));
-    setHTML(qs("#leftTeam"), ""); setHTML(qs("#rightTeam"), ""); setHTML(qs("#ScoreDetails tbody"), "");
-    $$("#teamToggles input").forEach(i => i.value = "");
-    qs("#fullSeasonPts")?.remove();
-    hide(qs(".scoredetailsWrap")); hide(qs("#ScoreDetails")); hide(qs("#ScoreNFLDetails"));
-    qs("#ScoreNFLDetails table")?.classList.remove("box_details_table");
-    const sd = qs("#ScoreDetails table");
-    sd?.classList.remove("scoring_details_table"); sd?.classList.remove("overview_details_table");
-    $$("a").forEach(a => a.classList?.remove?.("dblClicks"));
-}
+qs("#MFLPlayerPopupBioTab")?.removeAttribute("style");
+
+qsa(".MFLPlayerPopupNotificationTabs").forEach(li => { li.style.display = "none"; });
+
+if (MFLPopupOmitLinks) hide(qs("#MFLPlayerPopupLinks"));
+else show(qs("#MFLPlayerPopupLinks"));
+
+hide(qs("#MFLPlayerPopupLoaded"));
+hide(qs("#MFLPlayerPopupArticleLoaded"));
+setHTML(qs("#MFLPlayerPopupName"), headerName);
+show(qs("#MFLPlayerPopupContainer"));
+
+// kick off content population a tick later
+setTimeout(() => MFLPlayerPopupPopulate(pid, fullname, team, pos), 200);
+
+// hide other overlays/cleanup
+hide(qs(".teamdetailsWrap"));
+hide(qs("#TeamDetails"));
+
+setHTML(qs("#leftTeam"), "");
+setHTML(qs("#rightTeam"), "");
+setHTML(qs("#ScoreDetails tbody"), "");
+
+// clear team toggles
+qsa("#teamToggles input").forEach(i => { i.value = ""; });
+
+qs("#fullSeasonPts")?.remove();
+
+hide(qs(".scoredetailsWrap"));
+hide(qs("#ScoreDetails"));
+hide(qs("#ScoreNFLDetails"));
+
+qs("#ScoreNFLDetails table")?.classList.remove("box_details_table");
+const sd = qs("#ScoreDetails table");
+sd?.classList.remove("scoring_details_table");
+sd?.classList.remove("overview_details_table");
+
+// remove dblClicks from all anchors
+qsa("a").forEach(a => a.classList?.remove?.("dblClicks"));
+
 
 // ===============================
 //  Article popup
 // ===============================
 function MFLPlayerPopupArticleSetup(html, ageText, source) {
-    qs("#MFLPlayerPopupContainer")?.classList.add("MFLPlayerPopupArticleContainer");
-    show(qs("#MFLPlayerPopupOverlay"));
-    show(qs("#MFLPlayerPopupContainer #MFLPlayerPopupLoading"));
-    hide(qs("#MFLPlayerPopupLoaded"));
-    hide(qs("#MFLPlayerPopupArticleLoaded"));
-    setHTML(qs("#MFLPlayerPopupName"), `Article Posted ${ageText} Ago`);
-    show(qs("#MFLPlayerPopupContainer"));
-    setTimeout(() => MFLPlayerPopupArticlePopulate?.(html, ageText, source), 200);
-    hide(qs(".teamdetailsWrap")); hide(qs("#TeamDetails"));
+  qs("#MFLPlayerPopupContainer")?.classList.add("MFLPlayerPopupArticleContainer");
+  show(qs("#MFLPlayerPopupOverlay"));
+  show(qs("#MFLPlayerPopupContainer #MFLPlayerPopupLoading"));
+  hide(qs("#MFLPlayerPopupLoaded"));
+  hide(qs("#MFLPlayerPopupArticleLoaded"));
+  setHTML(qs("#MFLPlayerPopupName"), `Article Posted ${ageText} Ago`);
+  show(qs("#MFLPlayerPopupContainer"));
+  setTimeout(() => MFLPlayerPopupArticlePopulate?.(html, ageText, source), 200);
+  hide(qs(".teamdetailsWrap"));
+  hide(qs("#TeamDetails"));
 
-    const art = qs("#MFLPlayerPopupArticleLoaded");
-    try { bodyScrollLock?.disableBodyScroll(art); } catch (_) { }
+  const art = qs("#MFLPlayerPopupArticleLoaded");
+  try { bodyScrollLock?.disableBodyScroll(art); } catch (_) { /* noop */ }
+}
 }
 
 // ===============================
@@ -490,143 +571,158 @@ function MFLPlayerPopupNotificationPreSetup() {
     qs("#MFLPlayerPopupContainer")?.classList.add("MFLPlayerPopupNotificationContainer");
     show(qs("#MFLPlayerPopupOverlay"));
     show(qs("#MFLPlayerPopupContainer #MFLPlayerPopupLoading"));
-
-    $$(".MFLPlayerPopupPlayerTabs:not(#TeamDetails .MFLPlayerPopupPlayerTabs)").forEach(li => li.style.display = "none");
+  
+    // Hide player tabs inside/outside TeamDetails appropriately
+    qsa(".MFLPlayerPopupPlayerTabs")
+      .filter(li => !li.closest("#TeamDetails"))
+      .forEach(li => { li.style.display = "none"; });
+  
     qs("#MFLPlayerPopupBioTab")?.setAttribute("style", "display:none!important");
-    $$(".MFLPlayerPopupNotificationTabs").forEach(li => li.style.display = "table-cell");
+  
+    qsa(".MFLPlayerPopupNotificationTabs").forEach(li => { li.style.display = "table-cell"; });
+  
     hide(qs("#MFLPlayerPopupLinks"));
     hide(qs("#MFLPlayerPopupLoaded"));
     hide(qs("#MFLPlayerPopupArticleLoaded"));
-
+  
     // choose default visible tab based on available content
     const hasTrades = !!(MFLPlayerPopupOnloadContent[0] || MFLPlayerPopupOnloadContent[1]);
     const tabOrder = [
-        { ok: hasTrades, id: "MFLPlayerPopupTrades", link: "#MFLPlayerPopupTabLinksTrades" },
-        { ok: MFLPopupEnableCommishMessage && MFLPlayerPopupOnloadContent[4] !== "", id: "MFLPlayerPopupCommishMessage", link: "#MFLPlayerPopupTabLinksCommishMessage" },
-        { ok: MFLPopupEnableReminders && MFLPlayerPopupOnloadContent[2] !== "", id: "MFLPlayerPopupReminders", link: "#MFLPlayerPopupTabLinksReminders" },
-        { ok: MFLPopupEnableMessages && MFLPlayerPopupOnloadContent[3] !== "", id: "MFLPlayerPopupMessages", link: "#MFLPlayerPopupTabLinksMessages" }
+      { ok: hasTrades, id: "MFLPlayerPopupTrades",            link: "#MFLPlayerPopupTabLinksTrades" },
+      { ok: MFLPopupEnableCommishMessage && MFLPlayerPopupOnloadContent[4] !== "", id: "MFLPlayerPopupCommishMessage", link: "#MFLPlayerPopupTabLinksCommishMessage" },
+      { ok: MFLPopupEnableReminders && MFLPlayerPopupOnloadContent[2] !== "",      id: "MFLPlayerPopupReminders",      link: "#MFLPlayerPopupTabLinksReminders" },
+      { ok: MFLPopupEnableMessages && MFLPlayerPopupOnloadContent[3] !== "",       id: "MFLPlayerPopupMessages",       link: "#MFLPlayerPopupTabLinksMessages" }
     ];
+  
     let chosen = tabOrder.find(t => t.ok);
     if (!chosen) {
-        chosen = [
-            { flag: MFLPopupEnableTrade, id: "MFLPlayerPopupTrades", link: "#MFLPlayerPopupTabLinksTrades" },
-            { flag: MFLPopupEnableCommishMessage, id: "MFLPlayerPopupCommishMessage", link: "#MFLPlayerPopupTabLinksCommishMessage" },
-            { flag: MFLPopupEnableReminders, id: "MFLPlayerPopupReminders", link: "#MFLPlayerPopupTabLinksReminders" },
-            { flag: MFLPopupEnableMessages, id: "MFLPlayerPopupMessages", link: "#MFLPlayerPopupTabLinksMessages" },
-        ].find(x => x.flag);
+      chosen = [
+        { flag: MFLPopupEnableTrade,           id: "MFLPlayerPopupTrades",           link: "#MFLPlayerPopupTabLinksTrades" },
+        { flag: MFLPopupEnableCommishMessage,  id: "MFLPlayerPopupCommishMessage",   link: "#MFLPlayerPopupTabLinksCommishMessage" },
+        { flag: MFLPopupEnableReminders,       id: "MFLPlayerPopupReminders",        link: "#MFLPlayerPopupTabLinksReminders" },
+        { flag: MFLPopupEnableMessages,        id: "MFLPlayerPopupMessages",         link: "#MFLPlayerPopupTabLinksMessages" },
+      ].find(x => x.flag);
     }
+  
     if (chosen) {
-        const pane = qs("#" + chosen.id);
-        pane?.classList.add("active_div_tab_scroll");
-        show(pane);
-        qs(chosen.link)?.classList.add("active");
+      const pane = qs("#" + chosen.id);
+      pane?.classList.add("active_div_tab_scroll");
+      show(pane);
+      qs(chosen.link)?.classList.add("active");
     } else {
-        // nothing—show "no notifications"
-        const hdr = "<table class='popreport'><tbody><tr><th>You Have No Notifications!</th></tr><tr class='oddtablerow'><td>There are currently no active notifications.</td></tr></tbody></table>";
-        qs("#MFLPlayerPopupHeader")?.parentElement?.classList.add("noHide");
-        setHTML(qs("#MFLPlayerPopupHeader"), hdr);
-        qs("#MFLPlayerPopupMessages")?.classList.add("active_div_tab_scroll");
-        show(qs("#MFLPlayerPopupMessages"));
+      // nothing—show "no notifications"
+      const hdr = "<table class='popreport'><tbody><tr><th>You Have No Notifications!</th></tr><tr class='oddtablerow'><td>There are currently no active notifications.</td></tr></tbody></table>";
+      qs("#MFLPlayerPopupHeader")?.parentElement?.classList.add("noHide");
+      setHTML(qs("#MFLPlayerPopupHeader"), hdr);
+      qs("#MFLPlayerPopupMessages")?.classList.add("active_div_tab_scroll");
+      show(qs("#MFLPlayerPopupMessages"));
     }
-
+  
     const act = qs(".active_div_tab_scroll");
     try { bodyScrollLock?.disableBodyScroll(act); } catch (_) { }
-
+  
     setHTML(qs("#MFLPlayerPopupName"),
-        `League Notifications <span class='MFLPopupLeagueNotification' style='padding:0;background:none' title='Notifications'>${MFLPopupNotifyFontAwesome}</span>`
+      `League Notifications <span class='MFLPopupLeagueNotification' style='padding:0;background:none' title='Notifications'>${MFLPopupNotifyFontAwesome}</span>`
     );
     show(qs("#MFLPlayerPopupContainer"));
-}
+  }
+  
 
 // ===============================
 //  Notification setup (after content loaded)
 // ===============================
 function MFLPlayerPopupNotificationSetup(fromAuto) {
-    const ready = [0, 1, 2, 3, 4].every(i => MFLPlayerPopupTracker[i] === 1);
+    const ready  = [0, 1, 2, 3, 4].every(i => MFLPlayerPopupTracker[i] === 1);
     const hasAny = MFLPlayerPopupOnloadContent.some(x => x && x !== "");
-
+  
     if (!ready) return;
+  
     if (!fromAuto || hasAny) {
-        if (!fromAuto) MFLPlayerPopupNotificationPreSetup();
-        const none = MFLPlayerPopupOnloadContent.every(x => x === "");
-        if (none) {
-            const hdr = "<table class='popreport'><tbody><tr><th>You Have No Notifications!</th></tr><tr class='oddtablerow'><td>There are currently no active notifications.</td></tr></tbody></table>";
-            qs("#MFLPlayerPopupHeader")?.parentElement?.classList.add("noHide");
-            setHTML(qs("#MFLPlayerPopupHeader"), hdr);
-        } else {
-            const autoText = MFLPopupEnableAutoNotification
-                ? "<table class='popreport'><tbody><tr><th>You Have Notifications!</th></tr><tr class='oddtablerow'><td>There are one or more active notifications that have been set to automatically display once per browser session.<br><br>After closing this popup you can re-open notifications by either closing and re-opening the browser or clicking on the notification icon in the menu.</td></tr></tbody></table>"
-                : "<table class='popreport'><tbody><tr><th>You Have Notifications!</th></tr><tr class='oddtablerow'><td>There are one or more active notifications. Check the tabs below to view them.</td></tr></tbody></table>";
-            setHTML(qs("#MFLPlayerPopupHeader"), autoText);
-        }
-
-        // fill tabs
-        const trades = (MFLPlayerPopupOnloadContent[0] || "") + (MFLPlayerPopupOnloadContent[1] || "");
-        setHTML(qs("#MFLPlayerPopupTrades"),
-            trades
-                ? trades.replace(/report/g, "popreport").replace("<caption><span>Pending Trades</span></caption>", "").replace("<caption><span></span></caption>", "")
-                : "<br /><center><i>No Current Trade Notifications</i></center>"
-        );
-
-        setHTML(qs("#MFLPlayerPopupReminders"),
-            MFLPlayerPopupOnloadContent[2]
-                ? MFLPlayerPopupOnloadContent[2].replace(/report/g, "popreport")
-                : `<br /><center><i>No Active League Reminders<br/><br/>OR<br/><br/>League Reminders are Disabled in <a href='${baseURLDynamic}/${year}/csetup?L=${league_id}&C=FCUSTOM&F=${franchise_id}'>Franchise Customization</a> Settings</i></center>`
-        );
-
-        setHTML(qs("#MFLPlayerPopupMessages"),
-            MFLPlayerPopupOnloadContent[3]
-                ? MFLPlayerPopupOnloadContent[3].replace(/report/g, "popreport")
-                : "<br /><center><i>No Active Messages from MyFantasyLeague</i></center>"
-        );
-
-        setHTML(qs("#MFLPlayerPopupCommishMessage"),
-            MFLPlayerPopupOnloadContent[4]
-                ? MFLPlayerPopupOnloadContent[4].replace(/report/g, "popreport")
-                : "<br /><center><i>No Active Messages from Commissioner</i></center>"
-        );
-
-        setTimeout(() => MFLPlayerPopupInitiate?.(2), 1000);
+      if (!fromAuto) MFLPlayerPopupNotificationPreSetup();
+  
+      const none = MFLPlayerPopupOnloadContent.every(x => x === "");
+      if (none) {
+        const hdr = "<table class='popreport'><tbody><tr><th>You Have No Notifications!</th></tr><tr class='oddtablerow'><td>There are currently no active notifications.</td></tr></tbody></table>";
+        qs("#MFLPlayerPopupHeader")?.parentElement?.classList.add("noHide");
+        setHTML(qs("#MFLPlayerPopupHeader"), hdr);
+      } else {
+        const autoText = MFLPopupEnableAutoNotification
+          ? "<table class='popreport'><tbody><tr><th>You Have Notifications!</th></tr><tr class='oddtablerow'><td>There are one or more active notifications that have been set to automatically display once per browser session.<br><br>After closing this popup you can re-open notifications by either closing and re-opening the browser or clicking on the notification icon in the menu.</td></tr></tbody></table>"
+          : "<table class='popreport'><tbody><tr><th>You Have Notifications!</th></tr><tr class='oddtablerow'><td>There are one or more active notifications. Check the tabs below to view them.</td></tr></tbody></table>";
+        setHTML(qs("#MFLPlayerPopupHeader"), autoText);
+      }
+  
+      // fill tabs
+      const trades = (MFLPlayerPopupOnloadContent[0] || "") + (MFLPlayerPopupOnloadContent[1] || "");
+      setHTML(qs("#MFLPlayerPopupTrades"),
+        trades
+          ? trades.replace(/report/g, "popreport").replace("<caption><span>Pending Trades</span></caption>", "").replace("<caption><span></span></caption>", "")
+          : "<br /><center><i>No Current Trade Notifications</i></center>"
+      );
+  
+      setHTML(qs("#MFLPlayerPopupReminders"),
+        MFLPlayerPopupOnloadContent[2]
+          ? MFLPlayerPopupOnloadContent[2].replace(/report/g, "popreport")
+          : `<br /><center><i>No Active League Reminders<br/><br/>OR<br/><br/>League Reminders are Disabled in <a href='${baseURLDynamic}/${year}/csetup?L=${league_id}&C=FCUSTOM&F=${franchise_id}'>Franchise Customization</a> Settings</i></center>`
+      );
+  
+      setHTML(qs("#MFLPlayerPopupMessages"),
+        MFLPlayerPopupOnloadContent[3]
+          ? MFLPlayerPopupOnloadContent[3].replace(/report/g, "popreport")
+          : "<br /><center><i>No Active Messages from MyFantasyLeague</i></center>"
+      );
+  
+      setHTML(qs("#MFLPlayerPopupCommishMessage"),
+        MFLPlayerPopupOnloadContent[4]
+          ? MFLPlayerPopupOnloadContent[4].replace(/report/g, "popreport")
+          : "<br /><center><i>No Active Messages from Commissioner</i></center>"
+      );
+  
+      setTimeout(() => MFLPlayerPopupInitiate?.(2), 1000);
     }
-}
-
-
-// ===============================
-//  Projections tab (lazy load)
-// ===============================
-function MFLPlayerPopupPopulateProjections() {
-    show(qs("#MFLPlayerPopupProjections #MFLPlayerPopupLoading"));
+  }
+  
+  
+  // ===============================
+  //  Projections tab (lazy load)
+  // ===============================
+  function MFLPlayerPopupPopulateProjections() {
+    // If you applied the earlier HTML fix, use the new loader ID:
+    show(qs("#MFLPlayerPopupLoadingProjections"));
+  
     setTimeout(() => {
-        // if content still the loader, fetch
-        if ((qs("#MFLPlayerPopupProjections")?.textContent || "").includes("Loading Content")) {
-            const url = `${baseURLDynamic}/${year}/player?L=${league_id}&P=${MFLPlayerPopupCurrentPID}&YEAR=${year}&DISPLAY_TYPE=projections`;
-            fetchText(url).then(html => {
-                const doc = parseHTML(html);
-                const rows = $$("#player_stats_table tr", doc);
-                let i = 0, out = "<table class='popreport'><tbody>";
-                rows.forEach(tr => {
-                    if (qs("form", tr)) return; // skip rows with forms
-                    if (tr.querySelectorAll("th").length > 0) {
-                        // header: remove last col to go from 4 to 3 if present
-                        const ths = tr.querySelectorAll("th");
-                        if (parseInt(ths[0]?.getAttribute("colspan") || "0") === 4) {
-                            ths[0].setAttribute("colspan", "3");
-                        } else {
-                            ths[3]?.remove();
-                        }
-                        out += `<tr>${tr.innerHTML}</tr>`;
-                    } else if (tr.querySelectorAll("td").length > 1) {
-                        tr.querySelectorAll("td:nth-child(4)")?.forEach(td => td.remove());
-                        out += (i++ % 2 ? "<tr class='eventablerow'>" : "<tr class='oddtablerow'>") + tr.innerHTML + "</tr>";
-                    }
-                });
-                out += "</tbody></table>";
-                setHTML(qs("#MFLPlayerPopupProjections"), out);
-            }).catch(err => console.error("Error:", err));
-        }
+      // if content still the loader, fetch
+      if ((qs("#MFLPlayerPopupProjections")?.textContent || "").includes("Loading Content")) {
+        const url = `${baseURLDynamic}/${year}/player?L=${league_id}&P=${MFLPlayerPopupCurrentPID}&YEAR=${year}&DISPLAY_TYPE=projections`;
+        fetchText(url).then(html => {
+          const doc  = parseHTML(html); // DocumentFragment
+          const rows = qsa("#player_stats_table tr", doc);
+  
+          let i = 0, out = "<table class='popreport'><tbody>";
+          rows.forEach(tr => {
+            if (qs("form", tr)) return; // skip rows with forms
+  
+            if (tr.querySelectorAll("th").length > 0) {
+              // header: remove last col to go from 4 to 3 if present
+              const ths = tr.querySelectorAll("th");
+              if (parseInt(ths[0]?.getAttribute("colspan") || "0", 10) === 4) {
+                ths[0].setAttribute("colspan", "3");
+              } else {
+                ths[3]?.remove();
+              }
+              out += `<tr>${tr.innerHTML}</tr>`;
+            } else if (tr.querySelectorAll("td").length > 1) {
+              tr.querySelectorAll("td:nth-child(4)").forEach(td => td.remove());
+              out += (i++ % 2 ? "<tr class='eventablerow'>" : "<tr class='oddtablerow'>") + tr.innerHTML + "</tr>";
+            }
+          });
+          out += "</tbody></table>";
+          setHTML(qs("#MFLPlayerPopupProjections"), out);
+        }).catch(err => console.error("Error:", err));
+      }
     }, 1000);
-}
-
+  }
+  
 
 // ===============================
 //  Populate all tabs for a player
@@ -636,306 +732,308 @@ function MFLPlayerPopupPopulate(pid, name, team, pos) {
     show(qs("#MFLPlayerPopupContainer #MFLPlayerPopupLoading"));
     hide(qs("#MFLPlayerPopupLoaded"));
     hide(qs("#MFLPlayerPopupArticleLoaded"));
-
+  
     // 1) playerStatus
     const statusURL = `${baseURLDynamic}/${year}/export?TYPE=playerStatus&L=${league_id}&P=${pid}&JSON=1`;
     fetchJSON(statusURL)
-        .then(json => {
-            let status = "";
-            try { status = MFLPopupCustomRule?.("pStatus", null, null, pid, name, team, pos, json, null, null) ?? ""; }
-            catch { try { status = json.playerStatus.status; } catch { } }
-            // 2) player page
-            const profURL = `${baseURLDynamic}/${year}/player?L=${league_id}&P=${pid}`;
-            return fetchText(profURL).then(html => ({ html, status }));
-        })
-        .then(({ html, status }) => {
-            const doc = parseHTML(html);
-
-            // build header (photo + bio)
-            const photoCell = qs(".player_photo img", doc);
-            let photoHTML;
-            if (photoCell) {
-                photoCell.setAttribute("src", `https://www.mflscripts.com/playerImages_80x107/mfl_${pid}.png`);
-                photoHTML = photoCell.parentElement?.innerHTML ?? "";
+      .then(json => {
+        let status = "";
+        try { status = MFLPopupCustomRule?.("pStatus", null, null, pid, name, team, pos, json, null, null) ?? ""; }
+        catch { try { status = json.playerStatus.status; } catch { } }
+        // 2) player page
+        const profURL = `${baseURLDynamic}/${year}/player?L=${league_id}&P=${pid}`;
+        return fetchText(profURL).then(html => ({ html, status }));
+      })
+      .then(({ html, status }) => {
+        const doc = parseHTML(html);
+  
+        // build header (photo + bio)
+        const photoCell = qs(".player_photo img", doc);
+        let photoHTML;
+        if (photoCell) {
+          photoCell.setAttribute("src", `https://www.mflscripts.com/playerImages_80x107/mfl_${pid}.png`);
+          photoHTML = photoCell.parentElement?.innerHTML ?? "";
+        }
+        let hasPhoto = true;
+        if (!photoHTML) {
+          photoHTML = `<img src='https://www.mflscripts.com/ImageDirectory/script-images/nflTeamsvg_2/${team}.svg' alt='${team}' title='${team}' align='middle' />`;
+          hasPhoto = false;
+        } else {
+          const repl = photoHTML.substring(photoHTML.indexOf("this.src=") + 10, photoHTML.indexOf("no_photo_available.jpg") + 22);
+          photoHTML = photoHTML.replace(repl, "https://www.mflscripts.com/playerImages_80x107/free_agent.png");
+        }
+        photoHTML = photoHTML.replace("<img ", "<img class='articlepicture' ");
+  
+        // quick links row (hidden if MFLPopupOmitLinks)
+        if (!MFLPopupOmitLinks) {
+          let links = "<table class='popreport'><tbody><tr class='oddtablerow'>";
+          links += `<td style='text-align:center; text-indent:0;'><a href='${baseURLDynamic}/${year}/player?L=${league_id}&P=${pid}'>Full Profile</a></td>`;
+  
+          // Fantasy Sharks link (if present)
+          let fs = "";
+          qsa("#h3 a, h3 a", doc).forEach(a => {
+            if (a.textContent.trim() === "FantasySharks Profile") {
+              fs = `<a href='${a.getAttribute("href")}' title='Fantasy Sharks Profile' target='_blank'>Fantasy Sharks</a>`;
             }
-            let hasPhoto = true;
-            if (!photoHTML) {
-                photoHTML = `<img src='https://www.mflscripts.com/ImageDirectory/script-images/nflTeamsvg_2/${team}.svg' alt='${team}' title='${team}' align='middle' />`;
-                hasPhoto = false;
-            } else {
-                const repl = photoHTML.substring(photoHTML.indexOf("this.src=") + 10, photoHTML.indexOf("no_photo_available.jpg") + 22);
-                photoHTML = photoHTML.replace(repl, "https://www.mflscripts.com/playerImages_80x107/free_agent.png");
-            }
-            photoHTML = photoHTML.replace("<img ", "<img class='articlepicture' ");
-
-           // quick links row (hidden if MFLPopupOmitLinks)
-           if (!MFLPopupOmitLinks) {
-            let links = "<table class='popreport'><tbody><tr class='oddtablerow'>";
-            links += `<td style='text-align:center; text-indent:0;'><a href='${baseURLDynamic}/${year}/player?L=${league_id}&P=${pid}'>Full Profile</a></td>`;
-
-            // Fantasy Sharks link (if present)
-            let fs = "";
-            $$("#h3 a, h3 a", doc).forEach(a => {
-                if (a.textContent.trim() === "FantasySharks Profile") {
-                    fs = `<a href='${a.getAttribute("href")}' title='Fantasy Sharks Profile' target='_blank'>Fantasy Sharks</a>`;
-                }
-            });
-            if (fs) links += `<td class='screen-hide' style='text-align:center; text-indent:0;'>${fs}</td>`;
-
-            if (typeof franchise_id !== "undefined" && franchise_id !== "0000") {
-                let addDrop = `<a href='${baseURLDynamic}/${year}/add_drop?L=${league_id}&P=${pid}'>Add Player</a>`;
-                try {
-                    const fid = playerDatabase["pid_" + pid]?.fid;
-                    if (fid !== undefined) {
-                        addDrop =
-                            fid.indexOf(franchise_id) === -1
-                                ? `<a href='${baseURLDynamic}/${year}/options?L=${league_id}&O=05&FRANCHISE=${franchise_id},${fid.substring(0, 4)}&P=${pid}'>Propose Trade</a>`
-                                : `<a href='${baseURLDynamic}/${year}/add_drop?L=${league_id}'>Drop Player</a>`;
-                    }
-                } catch { }
-                links += `<td style='text-align:center; text-indent:0;'>${addDrop}</td>`;
-
-                     // watchlist add/remove
-                     let wl = `<a href='${baseURLDynamic}/${year}/options?L=${league_id}&O=178&PID=${pid}'>Watchlist</a>`;
-                     $$("#h3 a, h3 a", doc).some(a => {
-                         const txt = a.textContent || "";
-                         if (txt.includes("Remove")) { wl = `<a href='${baseURLDynamic}/${year}/options?L=${league_id}&O=178&PID=${pid}&ACTION=delete'>Watchlist Remove</a>`; return true; }
-                         if (txt.includes("Add")) { wl = `<a href='${baseURLDynamic}/${year}/options?L=${league_id}&O=178&PID=${pid}&ACTION=add'>Watchlist Add</a>`; return true; }
-                         return false;
-                     });
-                     links += `<td style='text-align:center; text-indent:0;'>${wl}</td>`;
-                 }
-                 links += `<td style='text-align:center; text-indent:0;'><a href='${baseURLDynamic}/${year}/player_history?L=${league_id}&PLAYERS=${pid}'>Trans. History</a></td>`;
-                 links += "</tr></tbody></table>";
-                 setHTML(qs("#MFLPlayerPopupLinks"), links);
-             }
-
-            // parse bio table (biography.report)
-            const bioRows = $$(".biography.report tr", doc);
-            const bio = {
-                ht: "--", wt: "--", dob: "--", age: "--", college: "---",
-                draftYear: "n/a", draftTeam: "", round: "", pick: "",
-                jersey: "--", experience: "", experienceInt: 0, acquired: "", photo: photoHTML
-            };
-
-            // extras array (salary/contract/etc.)
-            const extras = [];
-            bioRows.forEach(tr => {
-                const th = qs('th', tr)?.innerHTML?.trim() || "";
-                const td = qs('td', tr)?.innerHTML?.trim() || "";
-                switch (th) {
-                    case "Height/Weight:":
-                        bio.ht = td.slice(0, td.indexOf("/") - 1);
-                        bio.wt = td.slice(td.indexOf("/") + 2);
-                        break;
-                    case "DOB/Age:":
-                        bio.dob = td.slice(0, td.indexOf("/") - 1);
-                        bio.age = td.slice(td.indexOf("/") + 2);
-                        break;
-                    case "Jersey Num:":
-                        bio.jersey = parseInt(td) || "--";
-                        break;
-                    case "College:":
-                        bio.college = td || "---";
-                        break;
-                    case "Drafted:":
-                        if (td === "Undrafted") {
-                            bio.draftYear = "?"; bio.draftTeam = "FA"; bio.round = "n/a"; bio.pick = "n/a";
-                        } else {
-                            bio.draftYear = td.substring(0, td.indexOf("/") - 1);
-                            bio.draftTeam = td.substring(td.indexOf("/") + 2, td.indexOf("Round") - 3);
-                            bio.round = parseInt(td.substring(td.indexOf("Round") + 6)) || "";
-                            bio.pick = parseInt(td.substring(td.indexOf("Pick") + 5)) || "";
-                        }
-                        break;
-                    case "Experience:":
-                        if (isNaN(parseInt(td))) { bio.experience = "(Exp.: Rookie)"; bio.experienceInt = 1; }
-                        else { bio.experience = `(Exp.: ${parseInt(td)} years)`; bio.experienceInt = parseInt(td); }
-                        break;
-                    case "Acquired:":
-                        bio.acquired = td;
-                        break;
-                    case "Salary:":
-                        try { extras.push(MFLPopupCustomRule?.("salary", "Salary", td, pid, name, team, pos, statusData, status, bio) ?? { title: "Salary", info: td }); }
-                        catch { extras.push({ title: "Salary", info: td }); }
-                        break;
-                    case "Contract Year:":
-                        try { extras.push(MFLPopupCustomRule?.("contract_year", "Contract Year", td, pid, name, team, pos, statusData, status, bio) ?? { title: "Contract Year", info: td }); }
-                        catch { extras.push({ title: "Contract Year", info: td }); }
-                        break;
-                    case "Contract Status:":
-                        try { extras.push(MFLPopupCustomRule?.("contract_status", "Contract Status", td, pid, name, team, pos, statusData, status, bio) ?? { title: "Contract Status", info: td }); }
-                        catch { extras.push({ title: "Contract Status", info: td }); }
-                        break;
-                    case "Contract Info:":
-                        try { extras.push(MFLPopupCustomRule?.("contract_info", "Contract Information", td, pid, name, team, pos, statusData, status, bio) ?? { title: "Contract Information", info: td }); }
-                        catch { extras.push({ title: "Contract Information", info: td }); }
-                        break;
-                }
-            });
-
-            let headerRows = extras.length > 0 ? 6 : 4;
-            if (MFLPopupOmitStatus && extras.length === 1) headerRows = 4;
-
-            const nflLogo = (team && MFLPlayerPopupIncludeNFLLogo)
-                ? `<img src='https://www.mflscripts.com/ImageDirectory/script-images/nflTeamsvg_2/${team}.svg' class='MFLPlayerPopupNFLTeamLogo' />`
-                : "";
-
-            const jerseyBadge = (bio.jersey === "--") ? "" : `<span class='MFLPlayerPopupJersey'><span>${bio.jersey}</span></span>`;
-
-            // Draft text
-            let draftTxt;
-            if (bio.draftTeam === "FA") {
-                draftTxt = `${year - bio.experienceInt + 1} Undrafted ${bio.experience}`;
-            } else if (bio.round === "") {
-                draftTxt = `${bio.draftYear} ${bio.experience}`;
-            } else {
-                draftTxt = `${bio.draftYear} #${bio.round}.${bio.pick} ${bio.draftTeam} <span class='screen-hide'>${bio.experience}</span>`;
-            }
-
-            // Build header/bio table
-            let hdr = "<table class='popreport'><tbody>";
-            hdr += `<tr class='oddtablerow rows-${headerRows}'><td class='pop-photo' rowspan='${headerRows}'>${bio.photo}${nflLogo}${jerseyBadge}</td><td><span class='MFLPlayerPopupHeaderTitle' style='font-weight:bold'>Ht:</span> ${bio.ht}</td><td><span class='MFLPlayerPopupHeaderTitle' style='font-weight:bold'>Wt:</span> ${bio.wt}</td></tr>`;
-            hdr += `<tr class='eventablerow rows-${headerRows}'><td><span class='MFLPlayerPopupHeaderTitle' style='font-weight:bold'>Born:</span> ${bio.dob} <span class='screen-hide'>(${bio.age})</span></td><td><span class='MFLPlayerPopupHeaderTitle' style='font-weight:bold'>College:</span> ${bio.college}</td></tr>`;
-            hdr += `<tr class='oddtablerow rows-${headerRows}'><td colspan='2'><span class='MFLPlayerPopupHeaderTitle' style='font-weight:bold'>Draft:</span> ${draftTxt}</td></tr>`;
-
-            let oddEvenA = "even", oddEvenB = "odd";
-            if (!MFLPopupOmitStatus) {
-                hdr += `<tr class='eventablerow rows-${headerRows}'><td><span class='MFLPlayerPopupHeaderTitle' style='font-weight:bold'>Status:</span> ${status || ""}</td><td><span class='MFLPlayerPopupHeaderTitle' style='font-weight:bold'>Acquired:</span> ${bio.acquired}</td></tr>`;
-                oddEvenA = "odd"; oddEvenB = "even";
-            }
-
-            if (extras.length === 1) {
-                hdr += `<tr class='${oddEvenA}tablerow rows-${headerRows}'><td colspan='2'><span class='MFLPlayerPopupHeaderTitle' style='font-weight:bold' id='extras-0-title'>${extras[0].title}:</span> ${extras[0].info}</td></tr>`;
-                if (!MFLPopupOmitStatus) hdr += `<tr class='${oddEvenB}tablerow rows-${headerRows}'><td colspan='2'> </td></tr>`;
-            } else if (extras.length === 2) {
-                hdr += `<tr class='${oddEvenA}tablerow rows-${headerRows}'><td colspan='2'><span class='MFLPlayerPopupHeaderTitle extras-0-title' style='font-weight:bold'>${extras[0].title}:</span> ${extras[0].info}</td></tr>`;
-                hdr += `<tr class='${oddEvenB}tablerow rows-${headerRows}'><td colspan='2'><span class='MFLPlayerPopupHeaderTitle extras-1-title' style='font-weight:bold'>${extras[1].title}:</span> ${extras[1].info}</td></tr>`;
-            } else if (extras.length === 3) {
-                hdr += `<tr class='${oddEvenA}tablerow rows-${headerRows}'><td><span class='MFLPlayerPopupHeaderTitle extras-0-title' style='font-weight:bold'>${extras[0].title}:</span> ${extras[0].info}</td><td><span class='MFLPlayerPopupHeaderTitle extras-1-title' style='font-weight:bold'>${extras[1].title}:</span> ${extras[1].info}</td></tr>`;
-                hdr += `<tr class='${oddEvenB}tablerow rows-${headerRows}'><td colspan='2'><span class='MFLPlayerPopupHeaderTitle extras-2-title' style='font-weight:bold'>${extras[2].title}:</span> ${extras[2].info}</td></tr>`;
-            } else if (extras.length === 4) {
-                hdr += `<tr class='${oddEvenA}tablerow rows-${headerRows}'><td><span class='MFLPlayerPopupHeaderTitle extras-0-title' style='font-weight:bold'>${extras[0].title}:</span> ${extras[0].info}</td><td><span class='MFLPlayerPopupHeaderTitle extras-1-title' style='font-weight:bold'>${extras[1].title}:</span> ${extras[1].info}</td></tr>`;
-                hdr += `<tr class='${oddEvenB}tablerow rows-${headerRows}'><td><span class='MFLPlayerPopupHeaderTitle extras-2-title' style='font-weight:bold'>${extras[2].title}:</span> ${extras[2].info}</td><td><span class='MFLPlayerPopupHeaderTitle extras-3-title' style='font-weight:bold'>${extras[3].title}:</span> ${extras[3].info}</td></tr>`;
-            }
-            hdr += "</tbody></table>";
-
-            setHTML(qs("#MFLPlayerPopupHeader"), hdr);
-            setHTML(qs("#MFLPlayerPopupBio"), hdr);
-
-  // stats history table
-  let histOut = "<table class='popreport'><tbody>";
-  let k = 0;
-  $$(".biohistory.report tr", doc).forEach(tr => {
-      if (qs("form", tr)) return;
-      if (tr.querySelectorAll("th").length > 0) histOut += `<tr>${tr.innerHTML}</tr>`;
-      else if (tr.querySelectorAll("td").length > 0) {
-          tr.querySelectorAll("td a").forEach(a => {
-              const span = document.createElement("span"); span.innerHTML = a.innerHTML; a.replaceWith(span);
           });
-          histOut += (k++ % 2 ? "<tr class='eventablerow'>" : "<tr class='oddtablerow'>") + tr.innerHTML + "</tr>";
-      }
-  });
-  histOut += "</tbody></table>";
-  setHTML(qs("#MFLPlayerPopupStatsHistory"), histOut);
+          if (fs) links += `<td class='screen-hide' style='text-align:center; text-indent:0;'>${fs}</td>`;
 
-
-            // season stats
-            let statsOut = "<table class='popreport'><tbody>";
-            let idx = 0, reduced = false;
-            const statRows = $$("#player_stats_table tr", doc);
-            statRows.forEach(tr => {
-                if (qs('form', tr)) return;
-                if (tr.querySelectorAll('th').length > 0) {
-                    const ths = tr.querySelectorAll('th');
-                    if (parseInt(ths[0]?.getAttribute('colspan') || '0') === 6) { ths[0].setAttribute('colspan', '4'); reduced = true; }
-                    else if (reduced) { ths[3]?.remove(); ths[3]?.remove(); }
-                    statsOut += `<tr>${tr.innerHTML}</tr>`;
-                } else if (tr.querySelectorAll('td').length > 1) {
-                    tr.querySelectorAll('td a').forEach(a => { const s = document.createElement('span'); s.innerHTML = a.innerHTML; a.replaceWith(s); });
-                    // team name to abbrev if known
-                    const teamCell = tr.querySelector('td:nth-child(6)');
-                    if (teamCell) {
-                        const txt = teamCell.innerHTML;
-                        const teamName = txt.substring(0, txt.indexOf(" - "));
-                        if (teamName && MFLPlayerPopupTeamNames?.hasOwnProperty(teamName) && MFLPlayerPopupTeamNames[teamName].abbrev) {
-                            teamCell.innerHTML = txt.replace(teamName, `<span title='${teamName}'>${MFLPlayerPopupTeamNames[teamName].abbrev}</span>`);
-                        }
-                    }
-                    if (reduced) { tr.querySelector('td:nth-child(4)')?.remove(); tr.querySelector('td:nth-child(4)')?.remove(); }
-                    statsOut += (idx++ % 2 ? "<tr class='eventablerow'>" : "<tr class='oddtablerow'>") + tr.innerHTML + "</tr>";
-                }
+  
+          if (typeof franchise_id !== "undefined" && franchise_id !== "0000") {
+            let addDrop = `<a href='${baseURLDynamic}/${year}/add_drop?L=${league_id}&P=${pid}'>Add Player</a>`;
+            try {
+              const fid = playerDatabase["pid_" + pid]?.fid;
+              if (fid !== undefined) {
+                addDrop =
+                  fid.indexOf(franchise_id) === -1
+                    ? `<a href='${baseURLDynamic}/${year}/options?L=${league_id}&O=05&FRANCHISE=${franchise_id},${fid.substring(0, 4)}&P=${pid}'>Propose Trade</a>`
+                    : `<a href='${baseURLDynamic}/${year}/add_drop?L=${league_id}'>Drop Player</a>`;
+              }
+            } catch { }
+            links += `<td style='text-align:center; text-indent:0;'>${addDrop}</td>`;
+  
+            // watchlist add/remove
+            let wl = `<a href='${baseURLDynamic}/${year}/options?L=${league_id}&O=178&PID=${pid}'>Watchlist</a>`;
+            qsa("#h3 a, h3 a", doc).some(a => {
+              const txt = a.textContent || "";
+              if (txt.includes("Remove")) { wl = `<a href='${baseURLDynamic}/${year}/options?L=${league_id}&O=178&PID=${pid}&ACTION=delete'>Watchlist Remove</a>`; return true; }
+              if (txt.includes("Add"))    { wl = `<a href='${baseURLDynamic}/${year}/options?L=${league_id}&O=178&PID=${pid}&ACTION=add'>Watchlist Add</a>`; return true; }
+              return false;
             });
-            statsOut += "</tbody></table>";
-            setHTML(qs("#MFLPlayerPopupStats"), statsOut);
-
-            if (MFLPlayerPopupIncludeProjections) {
-                setHTML(qs("#MFLPlayerPopupProjections"),
-                    "<div id='MFLPlayerPopupLoading'><center>Loading Content . . .<br><br><div class='MFLPlayerPopupLoader'></div></center></div>"
-                );
+            links += `<td style='text-align:center; text-indent:0;'>${wl}</td>`;
+          }
+          links += `<td style='text-align:center; text-indent:0;'><a href='${baseURLDynamic}/${year}/player_history?L=${league_id}&PLAYERS=${pid}'>Trans. History</a></td>`;
+          links += "</tr></tbody></table>";
+          setHTML(qs("#MFLPlayerPopupLinks"), links);
+        }
+  
+        // parse bio table (biography.report)
+        const bioRows = qsa(".biography.report tr", doc);
+        const bio = {
+          ht: "--", wt: "--", dob: "--", age: "--", college: "---",
+          draftYear: "n/a", draftTeam: "", round: "", pick: "",
+          jersey: "--", experience: "", experienceInt: 0, acquired: "", photo: photoHTML
+        };
+  
+        // extras array (salary/contract/etc.)
+        const extras = [];
+        bioRows.forEach(tr => {
+          const th = qs('th', tr)?.innerHTML?.trim() || "";
+          const td = qs('td', tr)?.innerHTML?.trim() || "";
+          switch (th) {
+            case "Height/Weight:":
+              bio.ht = td.slice(0, td.indexOf("/") - 1);
+              bio.wt = td.slice(td.indexOf("/") + 2);
+              break;
+            case "DOB/Age:":
+              bio.dob = td.slice(0, td.indexOf("/") - 1);
+              bio.age = td.slice(td.indexOf("/") + 2);
+              break;
+            case "Jersey Num:":
+              bio.jersey = parseInt(td) || "--";
+              break;
+            case "College:":
+              bio.college = td || "---";
+              break;
+            case "Drafted:":
+              if (td === "Undrafted") {
+                bio.draftYear = "?"; bio.draftTeam = "FA"; bio.round = "n/a"; bio.pick = "n/a";
+              } else {
+                bio.draftYear = td.substring(0, td.indexOf("/") - 1);
+                bio.draftTeam = td.substring(td.indexOf("/") + 2, td.indexOf("Round") - 3);
+                bio.round = parseInt(td.substring(td.indexOf("Round") + 6)) || "";
+                bio.pick  = parseInt(td.substring(td.indexOf("Pick") + 5))  || "";
+              }
+              break;
+            case "Experience:":
+              if (isNaN(parseInt(td))) { bio.experience = "(Exp.: Rookie)"; bio.experienceInt = 1; }
+              else { bio.experience = `(Exp.: ${parseInt(td)} years)`; bio.experienceInt = parseInt(td); }
+              break;
+            case "Acquired:":
+              bio.acquired = td;
+              break;
+            case "Salary:":
+              try { extras.push(MFLPopupCustomRule?.("salary", "Salary", td, pid, name, team, pos, statusData, status, bio) ?? { title: "Salary", info: td }); }
+              catch { extras.push({ title: "Salary", info: td }); }
+              break;
+            case "Contract Year:":
+              try { extras.push(MFLPopupCustomRule?.("contract_year", "Contract Year", td, pid, name, team, pos, statusData, status, bio) ?? { title: "Contract Year", info: td }); }
+              catch { extras.push({ title: "Contract Year", info: td }); }
+              break;
+            case "Contract Status:":
+              try { extras.push(MFLPopupCustomRule?.("contract_status", "Contract Status", td, pid, name, team, pos, statusData, status, bio) ?? { title: "Contract Status", info: td }); }
+              catch { extras.push({ title: "Contract Status", info: td }); }
+              break;
+            case "Contract Info:":
+              try { extras.push(MFLPopupCustomRule?.("contract_info", "Contract Information", td, pid, name, team, pos, statusData, status, bio) ?? { title: "Contract Information", info: td }); }
+              catch { extras.push({ title: "Contract Information", info: td }); }
+              break;
+          }
+        });
+  
+        let headerRows = extras.length > 0 ? 6 : 4;
+        if (MFLPopupOmitStatus && extras.length === 1) headerRows = 4;
+  
+        const nflLogo = (team && MFLPlayerPopupIncludeNFLLogo)
+          ? `<img src='https://www.mflscripts.com/ImageDirectory/script-images/nflTeamsvg_2/${team}.svg' class='MFLPlayerPopupNFLTeamLogo' />`
+          : "";
+  
+        const jerseyBadge = (bio.jersey === "--") ? "" : `<span class='MFLPlayerPopupJersey'><span>${bio.jersey}</span></span>`;
+  
+        // Draft text
+        let draftTxt;
+        if (bio.draftTeam === "FA") {
+          draftTxt = `${year - bio.experienceInt + 1} Undrafted ${bio.experience}`;
+        } else if (bio.round === "") {
+          draftTxt = `${bio.draftYear} ${bio.experience}`;
+        } else {
+          draftTxt = `${bio.draftYear} #${bio.round}.${bio.pick} ${bio.draftTeam} <span class='screen-hide'>${bio.experience}</span>`;
+        }
+  
+        // Build header/bio table
+        let hdr = "<table class='popreport'><tbody>";
+        hdr += `<tr class='oddtablerow rows-${headerRows}'><td class='pop-photo' rowspan='${headerRows}'>${bio.photo}${nflLogo}${jerseyBadge}</td><td><span class='MFLPlayerPopupHeaderTitle' style='font-weight:bold'>Ht:</span> ${bio.ht}</td><td><span class='MFLPlayerPopupHeaderTitle' style='font-weight:bold'>Wt:</span> ${bio.wt}</td></tr>`;
+        hdr += `<tr class='eventablerow rows-${headerRows}'><td><span class='MFLPlayerPopupHeaderTitle' style='font-weight:bold'>Born:</span> ${bio.dob} <span class='screen-hide'>(${bio.age})</span></td><td><span class='MFLPlayerPopupHeaderTitle' style='font-weight:bold'>College:</span> ${bio.college}</td></tr>`;
+        hdr += `<tr class='oddtablerow rows-${headerRows}'><td colspan='2'><span class='MFLPlayerPopupHeaderTitle' style='font-weight:bold'>Draft:</span> ${draftTxt}</td></tr>`;
+  
+        let oddEvenA = "even", oddEvenB = "odd";
+        if (!MFLPopupOmitStatus) {
+          hdr += `<tr class='eventablerow rows-${headerRows}'><td><span class='MFLPlayerPopupHeaderTitle' style='font-weight:bold'>Status:</span> ${status || ""}</td><td><span class='MFLPlayerPopupHeaderTitle' style='font-weight:bold'>Acquired:</span> ${bio.acquired}</td></tr>`;
+          oddEvenA = "odd"; oddEvenB = "even";
+        }
+  
+        if (extras.length === 1) {
+          hdr += `<tr class='${oddEvenA}tablerow rows-${headerRows}'><td colspan='2'><span class='MFLPlayerPopupHeaderTitle' style='font-weight:bold' id='extras-0-title'>${extras[0].title}:</span> ${extras[0].info}</td></tr>`;
+          if (!MFLPopupOmitStatus) hdr += `<tr class='${oddEvenB}tablerow rows-${headerRows}'><td colspan='2'> </td></tr>`;
+        } else if (extras.length === 2) {
+          hdr += `<tr class='${oddEvenA}tablerow rows-${headerRows}'><td colspan='2'><span class='MFLPlayerPopupHeaderTitle extras-0-title' style='font-weight:bold'>${extras[0].title}:</span> ${extras[0].info}</td></tr>`;
+          hdr += `<tr class='${oddEvenB}tablerow rows-${headerRows}'><td colspan='2'><span class='MFLPlayerPopupHeaderTitle extras-1-title' style='font-weight:bold'>${extras[1].title}:</span> ${extras[1].info}</td></tr>`;
+        } else if (extras.length === 3) {
+          hdr += `<tr class='${oddEvenA}tablerow rows-${headerRows}'><td><span class='MFLPlayerPopupHeaderTitle extras-0-title' style='font-weight:bold'>${extras[0].title}:</span> ${extras[0].info}</td><td><span class='MFLPlayerPopupHeaderTitle extras-1-title' style='font-weight:bold'>${extras[1].title}:</span> ${extras[1].info}</td></tr>`;
+          hdr += `<tr class='${oddEvenB}tablerow rows-${headerRows}'><td colspan='2'><span class='MFLPlayerPopupHeaderTitle extras-2-title' style='font-weight:bold'>${extras[2].title}:</span> ${extras[2].info}</td></tr>`;
+        } else if (extras.length === 4) {
+          hdr += `<tr class='${oddEvenA}tablerow rows-${headerRows}'><td><span class='MFLPlayerPopupHeaderTitle extras-0-title' style='font-weight:bold'>${extras[0].title}:</span> ${extras[0].info}</td><td><span class='MFLPlayerPopupHeaderTitle extras-1-title' style='font-weight:bold'>${extras[1].title}:</span> ${extras[1].info}</td></tr>`;
+          hdr += `<tr class='${oddEvenB}tablerow rows-${headerRows}'><td><span class='MFLPlayerPopupHeaderTitle extras-2-title' style='font-weight:bold'>${extras[2].title}:</span> ${extras[2].info}</td><td><span class='MFLPlayerPopupHeaderTitle extras-3-title' style='font-weight:bold'>${extras[3].title}:</span> ${extras[3].info}</td></tr>`;
+        }
+        hdr += "</tbody></table>";
+  
+        setHTML(qs("#MFLPlayerPopupHeader"), hdr);
+        setHTML(qs("#MFLPlayerPopupBio"), hdr);
+  
+        // stats history table
+        let histOut = "<table class='popreport'><tbody>";
+        let k = 0;
+        qsa(".biohistory.report tr", doc).forEach(tr => {
+          if (qs("form", tr)) return;
+          if (tr.querySelectorAll("th").length > 0) histOut += `<tr>${tr.innerHTML}</tr>`;
+          else if (tr.querySelectorAll("td").length > 0) {
+            tr.querySelectorAll("td a").forEach(a => {
+              const span = document.createElement("span"); span.innerHTML = a.innerHTML; a.replaceWith(span);
+            });
+            histOut += (k++ % 2 ? "<tr class='eventablerow'>" : "<tr class='oddtablerow'>") + tr.innerHTML + "</tr>";
+          }
+        });
+        histOut += "</tbody></table>";
+        setHTML(qs("#MFLPlayerPopupStatsHistory"), histOut);
+  
+        // season stats
+        let statsOut = "<table class='popreport'><tbody>";
+        let idx = 0, reduced = false;
+        const statRows = qsa("#player_stats_table tr", doc);
+        statRows.forEach(tr => {
+          if (qs('form', tr)) return;
+          if (tr.querySelectorAll('th').length > 0) {
+            const ths = tr.querySelectorAll('th');
+            if (parseInt(ths[0]?.getAttribute('colspan') || '0', 10) === 6) { ths[0].setAttribute('colspan', '4'); reduced = true; }
+            else if (reduced) { ths[3]?.remove(); ths[3]?.remove(); }
+            statsOut += `<tr>${tr.innerHTML}</tr>`;
+          } else if (tr.querySelectorAll('td').length > 1) {
+            tr.querySelectorAll('td a').forEach(a => { const s = document.createElement('span'); s.innerHTML = a.innerHTML; a.replaceWith(s); });
+            // team name to abbrev if known
+            const teamCell = tr.querySelector('td:nth-child(6)');
+            if (teamCell) {
+              const txt = teamCell.innerHTML;
+              const teamName = txt.substring(0, txt.indexOf(" - "));
+              if (teamName && MFLPlayerPopupTeamNames?.hasOwnProperty(teamName) && MFLPlayerPopupTeamNames[teamName].abbrev) {
+                teamCell.innerHTML = txt.replace(teamName, `<span title='${teamName}'>${MFLPlayerPopupTeamNames[teamName].abbrev}</span>`);
+              }
             }
+            if (reduced) { tr.querySelector('td:nth-child(4)')?.remove(); tr.querySelector('td:nth-child(4)')?.remove(); }
+            statsOut += (idx++ % 2 ? "<tr class='eventablerow'>" : "<tr class='oddtablerow'>") + tr.innerHTML + "</tr>";
+          }
+        });
+        statsOut += "</tbody></table>";
+        setHTML(qs("#MFLPlayerPopupStats"), statsOut);
+  
+        if (MFLPlayerPopupIncludeProjections) {
+          setHTML(qs("#MFLPlayerPopupProjections"),
+            "<div id='MFLPlayerPopupLoadingProjections' class='MFLPlayerPopupLoading' style='display:flex;align-items:center;justify-content:center;flex-direction:column'>Loading Content . . .<br><br><div class='MFLPlayerPopupLoader'></div></div>"
+          );
+        }
+  
+        MFLPlayerPopupTracker[0] = 1;
+        MFLPlayerPopupInitiate?.(0);
+      })
+      .catch(err => console.error("Error:", err));
+    
 
-            MFLPlayerPopupTracker[0] = 1;
-            MFLPlayerPopupInitiate?.(0);
-        })
-        .catch(err => console.error("Error:", err));
-
-   // 3) News: player first, fallback to TEAM Rotowire
+// 3) News: player first, fallback to TEAM Rotowire
 const newsPlayerURL = `${baseURLDynamic}/${year}/news_articles?PLAYERS=${pid}&DAYS=30`;
 fetchText(newsPlayerURL)
-    .then(txt => {
-        const teamNewsURL = `${baseURLDynamic}/${year}/news_articles?TEAM=${team}&SOURCE=RotoWire&DAYS=30`;
-        return fetchText(teamNewsURL)
-            .then(txt2 => ({ playerTxt: txt, teamTxt: txt2 }))
-            .catch(() => ({ playerTxt: txt, teamTxt: "" }));
-    })
-    .then(({ playerTxt, teamTxt }) => {
-        // parse both, choose player or fallback to team
-        let useHTML = playerTxt, warn = "";
-        const playerDoc = parseHTML(playerTxt);
-        const rows = $$(".report tr", playerDoc);
-        if (rows.length < 2 && teamTxt) {
-            useHTML = teamTxt;
-            warn = `<h3 class='warning'>No News for Player - Showing Recent News for ${team}</h3>`;
-        }
+  .then(txt => {
+    const teamNewsURL = `${baseURLDynamic}/${year}/news_articles?TEAM=${team}&SOURCE=RotoWire&DAYS=30`;
+    return fetchText(teamNewsURL)
+      .then(txt2 => ({ playerTxt: txt, teamTxt: txt2 }))
+      .catch(()   => ({ playerTxt: txt, teamTxt: "" }));
+  })
+  .then(({ playerTxt, teamTxt }) => {
+    // parse both, choose player or fallback to team
+    let useHTML = playerTxt, warn = "";
+    const playerDoc = parseHTML(playerTxt);
+    const rows = qsa(".report tr", playerDoc);
+    if (rows.length < 2 && teamTxt) {
+      useHTML = teamTxt;
+      warn = `<h3 class='warning'>No News for Player - Showing Recent News for ${team}</h3>`;
+    }
 
-        const doc = parseHTML(useHTML);
-        let out = `<table class='popreport'>${warn}<tbody>`;
-        let line = 0;
+    const doc = parseHTML(useHTML);
+    let out = `<table class='popreport'>${warn}<tbody>`;
+    let line = 0;
 
-        $$(".report tr", doc).forEach(tr => {
-            if (line > 0) {
-                const link = qs("td:nth-child(2) a", tr)?.getAttribute("href") || "";
-                const id = `${pid}_${line}`;
+    qsa(".report tr", doc).forEach(tr => {
+      if (line > 0) {
+        const link = qs("td:nth-child(2) a", tr)?.getAttribute("href") || "";
+        const id = `${pid}_${line}`;
 
-                // unwrap all anchors
-                tr.querySelectorAll("td a").forEach(a => {
-                    const span = document.createElement("span");
-                    span.innerHTML = a.innerHTML;
-                    a.replaceWith(span);
-                });
-
-                // body + "(More)" -> clickable
-                let body = qs("td:nth-child(3)", tr)?.innerHTML || "";
-                body = body.replace("Analysis:", "<br><br><b>Analysis:</b>");
-                body = body.replace("(More)", `(<span class='MFLPlayerPopupMoreNews warning' onclick='MFLPlayerPopupMoreNews("${link}","${id}")'>More</span>)`);
-
-                const headline = qs("td:nth-child(2)", tr)?.innerHTML || "";
-                const ageAgo = qs("td:nth-child(4)", tr)?.innerHTML || "";
-
-                out += `<tr class='oddtablerow headline'><th>${headline}<span>${ageAgo} ago</span></th></tr>`;
-                out += `<tr class='eventablerow article'><td id='${id}' style='position:relative'>${body}</td></tr>`;
-            }
-            line++;
+        // unwrap all anchors
+        tr.querySelectorAll("td a").forEach(a => {
+          const span = document.createElement("span");
+          span.innerHTML = a.innerHTML;
+          a.replaceWith(span);
         });
-        out += "</tbody></table>";
-        setHTML(qs("#MFLPlayerPopupNews"), out);
-    })
-    .catch(err => console.error("Error fetching newsData:", err));
+
+        // body + "(More)" -> clickable
+        let body = qs("td:nth-child(3)", tr)?.innerHTML || "";
+        body = body.replace("Analysis:", "<br><br><b>Analysis:</b>");
+        body = body.replace("(More)", `(<span class='MFLPlayerPopupMoreNews warning' onclick='MFLPlayerPopupMoreNews("${link}","${id}")'>More</span>)`);
+
+        const headline = qs("td:nth-child(2)", tr)?.innerHTML || "";
+        const ageAgo   = qs("td:nth-child(4)", tr)?.innerHTML || "";
+
+        out += `<tr class='oddtablerow headline'><th>${headline}<span>${ageAgo} ago</span></th></tr>`;
+        out += `<tr class='eventablerow article'><td id='${id}' style='position:relative'>${body}</td></tr>`;
+      }
+      line++;
+    });
+    out += "</tbody></table>";
+    setHTML(qs("#MFLPlayerPopupNews"), out);
+  })
+  .catch(err => console.error("Error fetching newsData:", err));
 
 MFLPlayerPopupTracker[1] = 1;
 MFLPlayerPopupInitiate?.(0);
 }
+
 
 // expose
 window.MFLPlayerPopupSetup = MFLPlayerPopupSetup;
@@ -956,38 +1054,39 @@ function MFLPlayerPopupArticlePopulate(headlineHTML, ageText, articleId) {
     show(qs("#MFLPlayerPopupContainer #MFLPlayerPopupLoading"));
     hide(qs("#MFLPlayerPopupLoaded"));
     hide(qs("#MFLPlayerPopupArticleLoaded"));
-
+  
     const url = `${baseURLDynamic}/${year}/view_news_article?ID=${articleId}`;
     fetchText(url)
-        .then(txt => {
-            const doc = parseHTML(txt);
-            // second row of .report is the article content (unwrapped)
-            let i = 0, body = "";
-            $$(".report tr", doc).forEach(tr => {
-                if (i === 1) {
-                    tr.querySelectorAll("td a").forEach(a => {
-                        const s = document.createElement("span");
-                        s.innerHTML = a.innerHTML;
-                        a.replaceWith(s);
-                    });
-                    body = qs("td", tr)?.innerHTML ?? "";
-                    if (body.includes("Article Link")) body = body.substring(0, body.indexOf("Article Link") - 2);
-                    if (body.includes("Roto Pass from")) body = body.substring(0, body.indexOf("Roto Pass from") - 3);
-                }
-                i++;
+      .then(txt => {
+        const doc = parseHTML(txt);
+        // second row of .report is the article content (unwrapped)
+        let i = 0, body = "";
+        qsa(".report tr", doc).forEach(tr => {
+          if (i === 1) {
+            tr.querySelectorAll("td a").forEach(a => {
+              const s = document.createElement("span");
+              s.innerHTML = a.innerHTML;
+              a.replaceWith(s);
             });
-
-            const out =
-                "<table class='popreport'><tbody>" +
-                `<tr class='oddtablerow headline'><th>${headlineHTML}</th></tr>` +
-                `<tr class='eventablerow article'><td>${body}</td></tr>` +
-                "</tbody></table>";
-
-            setHTML(qs("#MFLPlayerPopupArticleLoaded"), out);
-            MFLPlayerPopupInitiate(1);
-        })
-        .catch(err => console.error("Error fetching articleData:", err));
-}
+            body = qs("td", tr)?.innerHTML ?? "";
+            if (body.includes("Article Link"))    body = body.substring(0, body.indexOf("Article Link") - 2);
+            if (body.includes("Roto Pass from"))  body = body.substring(0, body.indexOf("Roto Pass from") - 3);
+          }
+          i++;
+        });
+  
+        const out =
+          "<table class='popreport'><tbody>" +
+          `<tr class='oddtablerow headline'><th>${headlineHTML}</th></tr>` +
+          `<tr class='eventablerow article'><td>${body}</td></tr>` +
+          "</tbody></table>";
+  
+        setHTML(qs("#MFLPlayerPopupArticleLoaded"), out);
+        MFLPlayerPopupInitiate(1);
+      })
+      .catch(err => console.error("Error fetching articleData:", err));
+  }
+  
 
 // ===============================
 // Notifications: entrypoint
@@ -1052,79 +1151,81 @@ function MFLPlayerPopupPopulateNotification(openedViaIcon) {
         finishTrades();
     }
 
-   // Trade Polls
+// Trade Polls
 const finishPolls = () => { 
     MFLPlayerPopupTracker[1] = 1; 
     MFLPlayerPopupNotificationSetup(openedViaIcon); 
-};
-if (MFLPopupEnableTradePoll) {
+  };
+  if (MFLPopupEnableTradePoll) {
     const url = `${baseURLDynamic}/${year}/options?L=${league_id}&O=69`;
     fetchText(url)
-        .then(txt => {
-            const doc = parseHTML(txt);
-            $$('.report[id^="poll_"]', doc).forEach(tbl => {
-                const th0 = qs("th", tbl);
-                if (th0 && th0.textContent.includes("gave up")) {
-                    MFLPlayerPopupOnloadContent[1] += 
-                        tbl.parentElement?.parentElement?.outerHTML ?? tbl.outerHTML;
-                }
-            });
-            finishPolls();
-        })
-        .catch(err => { 
-            console.error("Error fetching pollData:", err); 
-            finishPolls(); 
+      .then(txt => {
+        const doc = parseHTML(txt);
+        qsa('.report[id^="poll_"]', doc).forEach(tbl => {
+          const th0 = qs("th", tbl);
+          if (th0 && th0.textContent.includes("gave up")) {
+            MFLPlayerPopupOnloadContent[1] += 
+              (tbl.parentElement?.parentElement?.outerHTML ?? tbl.outerHTML);
+          }
         });
-} else { 
+        finishPolls();
+      })
+      .catch(err => { 
+        console.error("Error fetching pollData:", err); 
+        finishPolls(); 
+      });
+  } else { 
     finishPolls(); 
-}
-
-// Reminders & Messages
-const finishRemMsg = () => { 
+  }
+  
+  // Reminders & Messages
+  const finishRemMsg = () => { 
     MFLPlayerPopupNotificationSetup(openedViaIcon); 
-};
-const markRem = () => { MFLPlayerPopupTracker[2] = 1; };
-const markMsg = () => { MFLPlayerPopupTracker[3] = 1; };
-
-if (MFLPopupEnableReminders || MFLPopupEnableMessages) {
+  };
+  const markRem = () => { MFLPlayerPopupTracker[2] = 1; };
+  const markMsg = () => { MFLPlayerPopupTracker[3] = 1; };
+  
+  if (MFLPopupEnableReminders || MFLPopupEnableMessages) {
     const url = `${baseURLDynamic}/${year}/home/${league_id}`;
     fetchText(url)
-        .then(txt => {
-            const doc = parseHTML(txt);
-            if (MFLPopupEnableReminders) {
-                const r = qs("#league_reminders", doc);
-                if (r) {
-                    MFLPlayerPopupOnloadContent[2] =
-                        `<table align='center' cellspacing='1' class='homepagemodule report'>${r.innerHTML}</table>`;
-                }
-                markRem();
-            } else { 
-                markRem(); 
-            }
-
-            if (MFLPopupEnableMessages) {
-                $$(".homepagemessage:not(#league_reminders)", doc).forEach(div => {
-                    MFLPlayerPopupOnloadContent[3] +=
-                        `<table align='center' cellspacing='1' class='homepagemodule report'>${div.innerHTML}</table>`;
-                });
-                markMsg();
-            } else { 
-                markMsg(); 
-            }
-
-            finishRemMsg();
-        })
-        .catch(err => { 
-            console.log("Error:", err); 
-            markRem(); 
-            markMsg(); 
-            finishRemMsg(); 
-        });
-} else { 
+      .then(txt => {
+        const doc = parseHTML(txt);
+  
+        if (MFLPopupEnableReminders) {
+          const r = qs("#league_reminders", doc);
+          if (r) {
+            MFLPlayerPopupOnloadContent[2] =
+              `<table align='center' cellspacing='1' class='homepagemodule report'>${r.innerHTML}</table>`;
+          }
+          markRem();
+        } else { 
+          markRem(); 
+        }
+  
+        if (MFLPopupEnableMessages) {
+          qsa(".homepagemessage:not(#league_reminders)", doc).forEach(div => {
+            MFLPlayerPopupOnloadContent[3] +=
+              `<table align='center' cellspacing='1' class='homepagemodule report'>${div.innerHTML}</table>`;
+          });
+          markMsg();
+        } else { 
+          markMsg(); 
+        }
+  
+        finishRemMsg();
+      })
+      .catch(err => { 
+        console.log("Error:", err); 
+        markRem(); 
+        markMsg(); 
+        finishRemMsg(); 
+      });
+  } else { 
     markRem(); 
     markMsg(); 
     finishRemMsg(); 
-}
+  }
+  
 
 // Commish Message
 if (MFLPopupEnableCommishMessage && MFLPopupCommishMessage !== "") {
@@ -1144,66 +1245,68 @@ if (MFLPopupEnableCommishMessage && MFLPopupCommishMessage !== "") {
 // ===============================
 function MFLPlayerPopupNewsIcon() {
     // mark roster cells as player cells (kept from original intent)
-    $$('#body_lineup table.report tr a[href*="player?L="][href*="P="]').forEach(a => {
-        a.closest('td')?.classList.add('player');
+    qsa('#body_lineup table.report tr a[href*="player?L="][href*="P="]').forEach(a => {
+      a.closest('td')?.classList.add('player');
     });
-
-    $$('a[href*="player?L="][href*="P="]').forEach(a => {
-        // exclude popup internal/known areas
-        if (a.closest('#MFLPlayerPopupLinks') || a.closest('#player_stats_table') || a.closest('.biohistory')) return;
-
-        const href = a.getAttribute('href') || "";
-        const pid = href.slice(href.indexOf("P=") + 2);
-        let alt = "news", icon = MFLPlayerPopupNewsOld, style = "";
-
-        if (typeof newsBreaker === "undefined") {
-            alt = "no news"; icon = MFLPlayerPopupNewsNone; style = "cursor:pointer;pointer-events:all;";
-        } else if (newsBreaker["pid_" + pid] === 0) {
-            alt = "new news"; icon = MFLPlayerPopupNewsNew; style = "cursor:pointer;pointer-events:all;";
-        } else if (newsBreaker["pid_" + pid] > 0) {
-            alt = "recent news"; icon = MFLPlayerPopupNewsOld; style = "cursor:pointer;pointer-events:all;";
-        }
-
-        if (!a.querySelector(".playerPopupIcon")) {
-            const img = document.createElement('img');
-            img.src = icon; img.alt = alt; img.title = alt; img.className = "playerPopupIcon"; img.style = style;
-            img.addEventListener('click', ev => { ev.preventDefault(); MFLPlayerPopupSetup(pid, a.innerHTML); });
-            a.appendChild(img);
-
-            // also click on the anchor opens popup
-            a.addEventListener('click', ev => { ev.preventDefault(); MFLPlayerPopupSetup(pid, a.innerHTML); });
-        }
+  
+    qsa('a[href*="player?L="][href*="P="]').forEach(a => {
+      // exclude popup internal/known areas
+      if (a.closest('#MFLPlayerPopupLinks') || a.closest('#player_stats_table') || a.closest('.biohistory')) return;
+  
+      const href = a.getAttribute('href') || "";
+      const pid  = href.slice(href.indexOf("P=") + 2);
+      let alt = "news", icon = MFLPlayerPopupNewsOld, style = "";
+  
+      if (typeof newsBreaker === "undefined") {
+        alt = "no news"; icon = MFLPlayerPopupNewsNone; style = "cursor:pointer;pointer-events:all;";
+      } else if (newsBreaker["pid_" + pid] === 0) {
+        alt = "new news"; icon = MFLPlayerPopupNewsNew; style = "cursor:pointer;pointer-events:all;";
+      } else if (newsBreaker["pid_" + pid] > 0) {
+        alt = "recent news"; icon = MFLPlayerPopupNewsOld; style = "cursor:pointer;pointer-events:all;";
+      }
+  
+      if (!a.querySelector(".playerPopupIcon")) {
+        const img = document.createElement('img');
+        img.src = icon; img.alt = alt; img.title = alt; img.className = "playerPopupIcon"; img.style = style;
+        img.addEventListener('click', ev => { ev.preventDefault(); MFLPlayerPopupSetup(pid, a.innerHTML); });
+        a.appendChild(img);
+  
+        // also click on the anchor opens popup
+        a.addEventListener('click', ev => { ev.preventDefault(); MFLPlayerPopupSetup(pid, a.innerHTML); });
+      }
     });
-}
+  }
+  
 
 // ===============================
 // Article icons on headlines
 // ===============================
 function MFLPlayerPopupArticleIcon() {
-    $$("td.headline a").forEach(a => {
-        const headline = a.innerHTML
-            .replace(/[\\"']/g, "\\$&")   // escape quotes
-            .replace(/\u0000/g, "\\0");  // escape null chars
-
-        const timestamp = a.closest("tr")?.querySelector("td.timestamp")?.innerHTML || "";
-        const href = a.getAttribute("href") || "";
-        const id = href.slice(href.indexOf("ID=") + 3);
-
-        if (!a.parentElement.querySelector(".playerPopupIcon")) {
-            const img = document.createElement("img");
-            img.src = MFLPlayerPopupNewsOld;
-            img.className = "playerPopupIcon";
-            img.style = "cursor:pointer;pointer-events:all;";
-            img.addEventListener("click", () => MFLPlayerPopupArticleSetup(headline, timestamp, id));
-            a.after(img);
-
-            a.addEventListener("click", ev => { 
-                ev.preventDefault(); 
-                MFLPlayerPopupArticleSetup(a.innerHTML, timestamp, id); 
-            });
-        }
+    qsa("td.headline a").forEach(a => {
+      const headline = a.innerHTML
+        .replace(/[\\"']/g, "\\$&")   // escape quotes
+        .replace(/\u0000/g, "\\0");   // escape null chars
+  
+      const timestamp = a.closest("tr")?.querySelector("td.timestamp")?.innerHTML || "";
+      const href = a.getAttribute("href") || "";
+      const id   = href.slice(href.indexOf("ID=") + 3);
+  
+      if (!a.parentElement.querySelector(".playerPopupIcon")) {
+        const img = document.createElement("img");
+        img.src = MFLPlayerPopupNewsOld;
+        img.className = "playerPopupIcon";
+        img.style = "cursor:pointer;pointer-events:all;";
+        img.addEventListener("click", () => MFLPlayerPopupArticleSetup(headline, timestamp, id));
+        a.after(img);
+  
+        a.addEventListener("click", ev => {
+          ev.preventDefault();
+          MFLPlayerPopupArticleSetup(a.innerHTML, timestamp, id);
+        });
+      }
     });
-}
+  }
+  
 
 
 // ===============================
@@ -1271,11 +1374,11 @@ if (window.MFLPopupOmitStatus) {
 // ===============================
 if (window.ShowMFLlogin) {
     window.toggleLogin = function () {
-        hide(qs(".skinSelectorContainer"));
-        const box = qs(".toggle_module_login");
-        const other = qs(".toggle_module_search");
-        if (!box) return;
-        if (getComputedStyle(box).display === "none") { show(box); hide(other); } else hide(box);
+      hide(qs(".skinSelectorContainer"));
+      const box = qs(".toggle_module_login");
+      const other = qs(".toggle_module_search");
+      if (!box) return;
+      if (getComputedStyle(box).display === "none") { show(box); hide(other); } else hide(box);
     };
     const css = document.createElement('style');
     css.textContent = `.pageheader .welcome{display:none}.toggle_login_content td b{display:block}.toggle_login_content td{text-align:center;font-size:90%}.toggle_module_login{position:absolute;z-index:999999;width:18.75rem;margin-top:.313rem;margin-left:-5.938rem;}`;
@@ -1287,20 +1390,20 @@ if (window.ShowMFLlogin) {
     qs("#icon-wrapper")?.style.setProperty('display', '');
     const welcome = document.querySelector(".pageheader .welcome");
     if (welcome) {
-        const target = qs(".toggle_login_content .oddtablerow");
-        if (target) target.appendChild(welcome);
-        $$(".toggle_login_content .welcome small").forEach(n => n.remove());
-        welcome.removeAttribute("class");
+      const target = qs(".toggle_login_content .oddtablerow");
+      if (target) target.appendChild(welcome);
+      qsa(".toggle_login_content .welcome small").forEach(n => n.remove()); // $$ → qsa
+      welcome.removeAttribute("class");
     }
-}
-
-if (window.ShowMFLsearch) {
+  }
+  
+  if (window.ShowMFLsearch) {
     window.toggleSearch = function () {
-        hide(qs(".skinSelectorContainer"));
-        const box = qs(".toggle_module_search");
-        const other = qs(".toggle_module_login");
-        if (!box) return;
-        if (getComputedStyle(box).display === "none") { show(box); hide(other); } else hide(box);
+      hide(qs(".skinSelectorContainer"));
+      const box = qs(".toggle_module_search");
+      const other = qs(".toggle_module_login");
+      if (!box) return;
+      if (getComputedStyle(box).display === "none") { show(box); hide(other); } else hide(box);
     };
     const css = document.createElement('style');
     css.textContent = `.toggle_search_content td{text-align:center;font-size:90%}.toggle_search_content input[type='submit']{margin:0 .313rem;border-radius:.188rem;padding:.188rem}.toggle_search_content input{position:relative;display:inline}.toggle_module_search{position:absolute;z-index:999999;width:18.75rem;margin-top:.313rem;margin-left:-8.125rem}.toggle_search_content td,.toggle_search_content form,.toggle_search_content input{vertical-align:middle;}`;
@@ -1310,43 +1413,45 @@ if (window.ShowMFLsearch) {
     document.head.appendChild(css2);
     qs("#icon-wrapper-mobile")?.style.setProperty('display', '');
     qs("#icon-wrapper")?.style.setProperty('display', '');
-}
+  }
+  
 
 // ===============================
 // Trigger (runs once when ready)
 // ===============================
 function triggerPlayerPopup() {
     window.triggerPlayerPopup_ran = true;
-
-    if (MFLPopupEnableReminders) $$("#body_home .homepagemessage").forEach(el => hide(el));
+  
+    if (MFLPopupEnableReminders) qsa("#body_home .homepagemessage").forEach(el => hide(el)); // $$ → qsa
     if (MFLPopupEnableMessages) { const el = qs("#league_reminders"); if (el) hide(el); }
-
+  
     MFLPlayerPopupSetupTeamNames?.();
-
+  
     if (!qs("#MFLPlayerPopupContainer")) MFLPlayerPopupCreateContainer?.();
-
+  
     // auto notifications (only once per session via cookie)
     if (typeof franchise_id !== "undefined" &&
         (MFLPopupEnableTrade || MFLPopupEnableTradePoll || MFLPopupEnableReminders || MFLPopupEnableMessages || (MFLPopupEnableCommishMessage && MFLPopupCommishMessage !== "")) &&
         MFLPopupEnableAutoNotification &&
         !getCookie(`MFLPlayerPopup_${year}_${league_id}_${franchise_id}`)
     ) {
-        MFLPlayerPopupPopulateOnload(false);
+      MFLPlayerPopupPopulateOnload(false);
     }
-
+  
     // Update extra titles by scraping roster module
     const url = `${baseURLDynamic}/${year}/home/${league_id}?MODULE=ROSTER`;
     fetchText(url)
-        .then(txt => {
-            const doc = parseHTML(txt);
-            for (const key in MFLPlayerPopupExtraTitles) {
-                if (!Object.prototype.hasOwnProperty.call(MFLPlayerPopupExtraTitles, key)) continue;
-                const th = qs(`th.${key}`, doc);
-                if (th) MFLPlayerPopupExtraTitles[key] = th.textContent.trim();
-            }
-        })
-        .catch(err => console.error("Error fetching extrasTitleData:", err));
-}
+      .then(txt => {
+        const doc = parseHTML(txt);
+        for (const key in MFLPlayerPopupExtraTitles) {
+          if (!Object.prototype.hasOwnProperty.call(MFLPlayerPopupExtraTitles, key)) continue;
+          const th = qs(`th.${key}`, doc);
+          if (th) MFLPlayerPopupExtraTitles[key] = th.textContent.trim();
+        }
+      })
+      .catch(err => console.error("Error fetching extrasTitleData:", err));
+  }
+  
 
 
 
@@ -1356,39 +1461,39 @@ function triggerPlayerPopup() {
 function playerPopupListenerCheck() {
     triggerPlayerPopup_count++;
     if (typeof reportFiveMinuteFullyLoaded !== "undefined" && reportFiveMinuteFullyLoaded) {
-        clearInterval(playerPopupListener);
-        if (!triggerPlayerPopup_ran) triggerPlayerPopup();
+      clearInterval(playerPopupListener);
+      if (!triggerPlayerPopup_ran) triggerPlayerPopup();
     }
     if (triggerPlayerPopup_count > 50) {
-        clearInterval(playerPopupListener);
-        console.log("Stop trying Player Popup after 5 seconds");
+      clearInterval(playerPopupListener);
+      console.log("Stop trying Player Popup after 5 seconds");
     }
-}
-if (typeof triggerPlayerPopup_ran === "undefined") window.triggerPlayerPopup_ran = false;
-if (typeof triggerPlayerPopup_count === "undefined") window.triggerPlayerPopup_count = 0;
-if (typeof playerPopupListener === "undefined") window.playerPopupListener = setInterval(playerPopupListenerCheck, 100);
-
-// ---------- mobile centering + notify icon ----------
-if (LoginSearchMobileCSS && window.innerWidth < 768) {
+  }
+  if (typeof triggerPlayerPopup_ran === "undefined") window.triggerPlayerPopup_ran = false;
+  if (typeof triggerPlayerPopup_count === "undefined") window.triggerPlayerPopup_count = 0;
+  if (typeof playerPopupListener === "undefined") window.playerPopupListener = setInterval(playerPopupListenerCheck, 100);
+  
+  // ---------- mobile centering + notify icon ----------
+  if (LoginSearchMobileCSS && window.innerWidth < 768) {
     const toggle_center = (els) => {
-        els.forEach(el => {
-            el.style.position = "absolute";
-            const left = Math.max(0, (window.innerWidth - el.offsetWidth) / 2 + window.scrollX);
-            el.style.left = `${left}px`;
-        });
+      els.forEach(el => {
+        el.style.position = "absolute";
+        const left = Math.max(0, (window.innerWidth - el.offsetWidth) / 2 + window.scrollX);
+        el.style.left = `${left}px`;
+      });
     };
-    toggle_center($$('.toggle_module_search,.toggle_module_login'));
+    toggle_center(qsa('.toggle_module_search,.toggle_module_login'));
     addStyle(`.toggle_module_search,.toggle_module_login{margin-left:-8.125rem;margin-top:0.875rem}#skinSelectorContainer{margin-top:0.875rem}`);
-}
-if (typeof franchise_id !== "undefined" &&
-    (MFLPopupEnableTrade || MFLPopupEnableTradePoll || MFLPopupEnableReminders || MFLPopupEnableMessages || (MFLPopupEnableCommishMessage && MFLPopupCommishMessage !== ""))) {
+  }
+  if (typeof franchise_id !== "undefined" &&
+      (MFLPopupEnableTrade || MFLPopupEnableTradePoll || MFLPopupEnableReminders || MFLPopupEnableMessages || (MFLPopupEnableCommishMessage && MFLPopupCommishMessage !== ""))) {
     addStyle(`li.notification-icon-popup{display:inline-block!important}`);
     qs("#icon-wrapper-mobile") && (qs("#icon-wrapper-mobile").style.display = "");
     qs("#icon-wrapper") && (qs("#icon-wrapper").style.display = "");
-}
-
-// ---------- Score Details / NFL Details scaffolding ----------
-if (MFLScoreDetailsPopup) {
+  }
+  
+  // ---------- Score Details / NFL Details scaffolding ----------
+  if (MFLScoreDetailsPopup) {
     if (typeof detailsOverlay === "undefined") window.detailsOverlay = "rgba(0,0,0,.7)";
     if (typeof detailsWrapBG === "undefined") window.detailsWrapBG = "#fff";
     if (typeof detailsWrapBorder === "undefined") window.detailsWrapBorder = "#000";
@@ -1396,212 +1501,214 @@ if (MFLScoreDetailsPopup) {
     if (typeof detailsWrapBoxShdw === "undefined") window.detailsWrapBoxShdw = "0 0 0.188rem 0.188rem rgba(0,0,0,.1)";
     if (typeof detailsWrapPadding === "undefined") window.detailsWrapPadding = "0.625rem";
     if (typeof detailsWrapRadius === "undefined") window.detailsWrapRadius = "0.188rem";
-
+  
     document.body.insertAdjacentHTML('beforeend',
-        `<div class="scoredetailsWrap" style="display:none;position:fixed;height:100%;width:100%;background:${detailsOverlay};left:0;top:0;z-index:999991"></div>
-     <div id="ScoreDetails" class="detailsReportWrap" style="z-index:999991;display:none;max-width:31.25rem;width:96%;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%, -50%);background:${detailsWrapBG};border:${detailsWrapBorWidh} solid ${detailsWrapBorder};box-shadow:${detailsWrapBoxShdw};border-radius:${detailsWrapRadius};padding:${detailsWrapPadding};max-height:90%;overflow:auto">
-       <table><caption><span></span></caption><span id="MFLPlayerPopupClose">X</span><tbody></tbody></table>
-     </div>
-     <div id="ScoreNFLDetails" class="detailsReportWrap" style="z-index:999991;display:none;max-width:31.25rem;width:96%;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%, -50%);background:${detailsWrapBG};border:${detailsWrapBorWidh} solid ${detailsWrapBorder};box-shadow:${detailsWrapBoxShdw};border-radius:${detailsWrapRadius};padding:${detailsWrapPadding};max-height:90%;overflow:auto">
-       <table><caption><span></span></caption><span id="MFLPlayerPopupClose">X</span>
-         <tbody><tr><td>
-           <div id="teamToggles">
-             <div class="leftT"  style="vertical-align:top;display:inline-block;width:50%;text-align:center"><input type="submit" value="" style="min-width:6.25rem;outline:none"></div>
-             <div class="rightT" style="vertical-align:top;opacity:.5;display:inline-block;width:50%;text-align:center"><input type="submit" value="" style="min-width:6.25rem;outline:none"></div>
-           </div>
-         </td></tr></tbody>
-         <tbody id="leftTeam"></tbody>
-         <tbody id="rightTeam" style="display:none"></tbody>
-       </table>
-     </div>`
+      `<div class="scoredetailsWrap" style="display:none;position:fixed;height:100%;width:100%;background:${detailsOverlay};left:0;top:0;z-index:999991"></div>
+       <div id="ScoreDetails" class="detailsReportWrap" style="z-index:999991;display:none;max-width:31.25rem;width:96%;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%, -50%);background:${detailsWrapBG};border:${detailsWrapBorWidh} solid ${detailsWrapBorder};box-shadow:${detailsWrapBoxShdw};border-radius:${detailsWrapRadius};padding:${detailsWrapPadding};max-height:90%;overflow:auto">
+         <table><caption><span></span></caption><span id="MFLPlayerPopupClose">X</span><tbody></tbody></table>
+       </div>
+       <div id="ScoreNFLDetails" class="detailsReportWrap" style="z-index:999991;display:none;max-width:31.25rem;width:96%;margin:auto;position:fixed;top:50%;left:50%;transform:translate(-50%, -50%);background:${detailsWrapBG};border:${detailsWrapBorWidh} solid ${detailsWrapBorder};box-shadow:${detailsWrapBoxShdw};border-radius:${detailsWrapRadius};padding:${detailsWrapPadding};max-height:90%;overflow:auto">
+         <table><caption><span></span></caption><span id="MFLPlayerPopupClose">X</span>
+           <tbody><tr><td>
+             <div id="teamToggles">
+               <div class="leftT"  style="vertical-align:top;display:inline-block;width:50%;text-align:center"><input type="submit" value="" style="min-width:6.25rem;outline:none"></div>
+               <div class="rightT" style="vertical-align:top;opacity:.5;display:inline-block;width:50%;text-align:center"><input type="submit" value="" style="min-width:6.25rem;outline:none"></div>
+             </div>
+           </td></tr></tbody>
+           <tbody id="leftTeam"></tbody>
+           <tbody id="rightTeam" style="display:none"></tbody>
+         </table>
+       </div>`
     );
     addStyle(`a[href*="&MATCHUP=%2CFA"],a[href*="MATCHUP=FA%2C"]{display:none}
-    table.scoring_details_table td.points,table.box_details_table td,table.box_details_table th{text-align:center!important}
-    table.scoring_details_table th,table.scoring_details_table td,table.box_details_table td:nth-child(1),table.box_details_table tr:nth-child(2) > th:nth-child(1){text-align:left!important}
-    #body_ajax_ls td.ls_game_info{pointer-events:none}`);
-
+      table.scoring_details_table td.points,table.box_details_table td,table.box_details_table th{text-align:center!important}
+      table.scoring_details_table th,table.scoring_details_table td,table.box_details_table td:nth-child(1),table.box_details_table tr:nth-child(2) > th:nth-child(1){text-align:left!important}
+      #body_ajax_ls td.ls_game_info{pointer-events:none}`);
+  
     // unwrap player anchors inside totals on ready
     document.addEventListener('DOMContentLoaded', () => {
-        const toUnwrap = $$('#body_options_08 td.points.tot a[href*="player?L"][href*="P="], #body_top td.points.tot a[href*="player?L"][href*="P="]');
-        unwrapAll(toUnwrap);
+      const toUnwrap = qsa('#body_options_08 td.points.tot a[href*="player?L"][href*="P="], #body_top td.points.tot a[href*="player?L"][href*="P="]');
+      unwrapAll(toUnwrap);
     });
-
+  
     // close when overlay clicked
     document.body.addEventListener('click', (ev) => {
-        if (!ev.target.classList.contains('scoredetailsWrap')) return;
-        setHTML(qs("#ScoreDetails tbody"), "");
-        setHTML(qs("#leftTeam"), "");
-        setHTML(qs("#rightTeam"), "");
-        hide(qs(".scoredetailsWrap"));
-        hide(qs("#ScoreDetails"));
-        hide(qs("#ScoreNFLDetails"));
-        const tt = $$("#teamToggles input"); tt.forEach(i => i.value = "");
-        const fs = qs("#fullSeasonPts"); fs && fs.remove();
-        qs("#ScoreNFLDetails table")?.classList.remove("box_details_table");
-        qs("#ScoreDetails table")?.classList.remove("scoring_details_table", "overview_details_table");
-        $$("a").forEach(a => a.classList.remove("dblClicks"));
-        try { bodyScrollLock.clearAllBodyScrollLocks(); } catch (_) { }
+      if (!ev.target.classList.contains('scoredetailsWrap')) return;
+      setHTML(qs("#ScoreDetails tbody"), "");
+      setHTML(qs("#leftTeam"), "");
+      setHTML(qs("#rightTeam"), "");
+      hide(qs(".scoredetailsWrap"));
+      hide(qs("#ScoreDetails"));
+      hide(qs("#ScoreNFLDetails"));
+      const tt = qsa("#teamToggles input"); tt.forEach(i => i.value = "");
+      const fs = qs("#fullSeasonPts"); fs && fs.remove();
+      qs("#ScoreNFLDetails table")?.classList.remove("box_details_table");
+      qs("#ScoreDetails table")?.classList.remove("scoring_details_table", "overview_details_table");
+      qsa("a").forEach(a => a.classList.remove("dblClicks"));
+      try { bodyScrollLock.clearAllBodyScrollLocks(); } catch (_) { }
     });
-
+  
     // block double click links
     document.body.addEventListener('click', (ev) => {
-        if (ev.target.closest('.dblClicks')) ev.preventDefault();
+      if (ev.target.closest('.dblClicks')) ev.preventDefault();
     });
-
+  
     // open player scoring breakdown
     document.body.addEventListener('click', async (ev) => {
-        const a = ev.target.closest('.report a[href*="detailed?L"][href*="P="]:not(#player_records a):not(#body_options_157 a)');
-        if (!a) return;
-        ev.preventDefault();
-
-        $$(".detailsReportWrap table").forEach(t => t.classList.add("report"));
-        const href = a.getAttribute('href');
-        const sub = href.substring(href.indexOf("detailed?") - 1);
-        const url = `${baseURLDynamic}/${year}/${sub}&PRINTER=1`;
-        const isPastYear = (href.substring(href.indexOf("YEAR=") + 5) < year);
-
-        try {
-            const html = await fetchText(url);
-            const doc = parseHTML(html);
-            const tbody = qs(".report tbody", doc);
-            qs("#ScoreDetails caption span").textContent = "Scoring Breakdown";
-            const full = qs("#fullSeasonPts"); full && full.remove();
-            qs("#ScoreDetails tbody").replaceWith(tbody);
+      const a = ev.target.closest('.report a[href*="detailed?L"][href*="P="]:not(#player_records a):not(#body_options_157 a)');
+      if (!a) return;
+      ev.preventDefault();
+  
+      qsa(".detailsReportWrap table").forEach(t => t.classList.add("report"));
+      const href = a.getAttribute('href');
+      const sub = href.substring(href.indexOf("detailed?") - 1);
+      const url = `${baseURLDynamic}/${year}/${sub}&PRINTER=1`;
+      const isPastYear = (href.substring(href.indexOf("YEAR=") + 5) < year);
+  
+      try {
+        const html = await fetchText(url);
+        const doc = parseHTML(html);
+        const tbody = qs(".report tbody", doc);
+        qs("#ScoreDetails caption span").textContent = "Scoring Breakdown";
+        const full = qs("#fullSeasonPts"); full && full.remove();
+        qs("#ScoreDetails tbody").replaceWith(tbody);
+        qs("#ScoreNFLDetails table")?.classList.remove("box_details_table");
+        const sdTable = qs("#ScoreDetails table");
+        sdTable?.classList.remove("overview_details_table");
+        sdTable?.classList.add("scoring_details_table");
+  
+        if (isPastYear) {
+          qsa('a[href*="&MATCHUP="]', qs("#ScoreDetails")).forEach(el => el.remove());
+          const hideCell = qs("#ScoreDetails tr.oddtablerow:nth-child(2) td:nth-child(1)");
+          if (hideCell) {
+            hideCell.style.visibility = "hidden";
+            const b = hideCell.querySelector('b'); b && (b.style.visibility = "visible");
+          }
+        }
+        // strip PRINTER from position links
+        replaceAllIn(qs("#ScoreDetails"),
+          '#ScoreDetails td b a[class*="position_"]',
+          (node) => node.setAttribute('href', node.getAttribute('href').replace('&PRINTER=1', '')));
+  
+        qsa('a[href*="&MATCHUP=%2CFA"],a[href*="MATCHUP=FA%2C"]', qs("#ScoreDetails")).forEach(el => el.remove());
+  
+        try { MFLPlayerPopupNewsIcon("ScoreDetails"); } catch (_) { }
+        show(qs(".scoredetailsWrap")); show(qs("#ScoreDetails"));
+        try { bodyScrollLock.disableBodyScroll(qs("#ScoreDetails")); } catch (_) { }
+        setHTML(qs("#leftTeam"), ""); setHTML(qs("#rightTeam"), "");
+        qsa("#teamToggles input").forEach(i => i.value = "");
+        hide(qs("#ScoreNFLDetails"));
+  
+        // close button
+        const closeBtn = qs("#ScoreDetails #MFLPlayerPopupClose");
+        if (closeBtn) {
+          closeBtn.onclick = () => {
+            setHTML(qs("#ScoreDetails tbody"), "");
+            hide(qs(".scoredetailsWrap")); hide(qs("#ScoreDetails"));
+            try { bodyScrollLock.clearAllBodyScrollLocks(); } catch (_) { }
             qs("#ScoreNFLDetails table")?.classList.remove("box_details_table");
-            const sdTable = qs("#ScoreDetails table");
-            sdTable?.classList.remove("overview_details_table");
-            sdTable?.classList.add("scoring_details_table");
-
-            if (isPastYear) {
-                $$('a[href*="&MATCHUP="]', qs("#ScoreDetails")).forEach(el => el.remove());
-                const hideCell = qs("#ScoreDetails tr.oddtablerow:nth-child(2) td:nth-child(1)");
-                if (hideCell) {
-                    hideCell.style.visibility = "hidden";
-                    const b = hideCell.querySelector('b'); b && (b.style.visibility = "visible");
-                }
-            }
-            // strip PRINTER from position links
-            replaceAllIn(qs("#ScoreDetails"),
-                '#ScoreDetails td b a[class*="position_"]',
-                (node) => node.setAttribute('href', node.getAttribute('href').replace('&PRINTER=1', '')));
-
-            $$('a[href*="&MATCHUP=%2CFA"],a[href*="MATCHUP=FA%2C"]', qs("#ScoreDetails")).forEach(el => el.remove());
-
-            try { MFLPlayerPopupNewsIcon("ScoreDetails"); } catch (_) { }
-            show(qs(".scoredetailsWrap")); show(qs("#ScoreDetails"));
-            try { bodyScrollLock.disableBodyScroll(qs("#ScoreDetails")); } catch (_) { }
-            setHTML(qs("#leftTeam"), ""); setHTML(qs("#rightTeam"), "");
-            $$("#teamToggles input").forEach(i => i.value = "");
-            hide(qs("#ScoreNFLDetails"));
-
-            // close button
-            const closeBtn = qs("#ScoreDetails #MFLPlayerPopupClose");
-            if (closeBtn) {
-                closeBtn.onclick = () => {
-                    setHTML(qs("#ScoreDetails tbody"), "");
-                    hide(qs(".scoredetailsWrap")); hide(qs("#ScoreDetails"));
-                    try { bodyScrollLock.clearAllBodyScrollLocks(); } catch (_) { }
-                    qs("#ScoreNFLDetails table")?.classList.remove("box_details_table");
-                    qs("#ScoreDetails table")?.classList.remove("scoring_details_table", "overview_details_table");
-                    $$("a").forEach(a => a.classList.remove("dblClicks"));
-                };
-            }
-        } catch (err) { console.error("Error:", err); }
+            qs("#ScoreDetails table")?.classList.remove("scoring_details_table", "overview_details_table");
+            qsa("a").forEach(a => a.classList.remove("dblClicks"));
+          };
+        }
+      } catch (err) { console.error("Error:", err); }
     });
+    
 
 
 
-   // open matchup (two-column) breakdown
+// ---------- open matchup (two-column) breakdown ----------
 document.body.addEventListener('click', async (ev) => {
     const a = ev.target.closest('.report a[href*="MATCHUP"]');
     if (!a) return;
     ev.preventDefault();
-
+  
     const fs = qs("#fullSeasonPts"); fs && fs.remove();
-    $$(".detailsReportWrap table").forEach(t => t.classList.add("report"));
+    qsa(".detailsReportWrap table").forEach(t => t.classList.add("report")); // $$ → qsa
     const url = `${a.getAttribute('href')}&PRINTER=1`;
     qs("#ScoreNFLDetails caption span").textContent = "Detailed Results";
-
+  
     try {
-        const html = await fetchText(url);
-        const doc = parseHTML(html);
-
-        const left = qsa("td.two_column_layout:nth-of-type(1) .report tbody:nth-child(2)", doc)?.[0]?.childNodes || [];
-        const right = qsa("td.two_column_layout:nth-of-type(2) .report tbody:nth-child(2)", doc)?.[0]?.childNodes || [];
-        const leftCap = qs("td.two_column_layout:nth-of-type(1) .report caption:nth-child(1) span", doc)?.textContent || "";
-        const rightCap = qs("td.two_column_layout:nth-of-type(2) .report caption:nth-child(1) span", doc)?.textContent || "";
-
-        qs("#ScoreDetails table")?.classList.remove("scoring_details_table", "overview_details_table");
-        qs("#ScoreNFLDetails table")?.classList.add("box_details_table");
-
-        setHTML(qs("#leftTeam"), ""); 
-        setHTML(qs("#rightTeam"), "");
-        qs("#leftTeam")?.append(...left);
-        qs("#rightTeam")?.append(...right);
-
-        // strip PRINTER
-        replaceAllIn(qs("#ScoreNFLDetails"),
-            '#ScoreNFLDetails td a[class*="position_"]',
-            (node) => node.setAttribute('href', node.getAttribute('href').replace('&PRINTER=1', '')));
-
-        qs("#teamToggles .leftT input").value = leftCap;
-        qs("#teamToggles .rightT input").value = rightCap;
-
-        $$('a[href*="&MATCHUP=%2CFA"],a[href*="MATCHUP=FA%2C"]', qs("#ScoreNFLDetails")).forEach(el => el.remove());
-
-        setHTML(qs("#ScoreDetails tbody"), "");
-        hide(qs("#ScoreDetails")); 
-        show(qs(".scoredetailsWrap")); 
-        show(qs("#ScoreNFLDetails"));
-        try { bodyScrollLock.disableBodyScroll(qs("#ScoreNFLDetails")); } catch (_) { }
-
-        qs(".leftT")?.addEventListener('click', () => {
-            qs(".leftT").style.opacity = "1"; 
-            qs(".rightT").style.opacity = ".5";
-            show(qs("#leftTeam")); 
-            hide(qs("#rightTeam"));
-        });
-        qs(".rightT")?.addEventListener('click', () => {
-            qs(".rightT").style.opacity = "1"; 
-            qs(".leftT").style.opacity = ".5";
-            show(qs("#rightTeam")); 
-            hide(qs("#leftTeam"));
-        });
-
-        const closeBtn = qs("#ScoreNFLDetails #MFLPlayerPopupClose");
-        if (closeBtn) {
-            closeBtn.onclick = () => {
-                setHTML(qs("#leftTeam"), ""); 
-                setHTML(qs("#rightTeam"), "");
-                $$("#teamToggles input").forEach(i => i.value = "");
-                hide(qs(".scoredetailsWrap")); 
-                hide(qs("#ScoreNFLDetails"));
-                try { bodyScrollLock.clearAllBodyScrollLocks(); } catch (_) { }
-                qs("#ScoreNFLDetails table")?.classList.remove("box_details_table");
-                qs("#ScoreDetails table")?.classList.remove("scoring_details_table", "overview_details_table");
-                $$("a").forEach(a => a.classList.remove("dblClicks"));
-            };
-        }
-
-        try {
-            MFLPlayerPopupNewsIcon("ScoreDetails");
-            MFLPlayerPopupNewsIcon("ScoreNFLDetails");
-        } catch (_) { }
+      const html = await fetchText(url);
+      const doc = parseHTML(html);
+  
+      const left    = qsa("td.two_column_layout:nth-of-type(1) .report tbody:nth-child(2)", doc)?.[0]?.childNodes || [];
+      const right   = qsa("td.two_column_layout:nth-of-type(2) .report tbody:nth-child(2)", doc)?.[0]?.childNodes || [];
+      const leftCap = qs("td.two_column_layout:nth-of-type(1) .report caption:nth-child(1) span", doc)?.textContent || "";
+      const rightCap= qs("td.two_column_layout:nth-of-type(2) .report caption:nth-child(1) span", doc)?.textContent || "";
+  
+      qs("#ScoreDetails table")?.classList.remove("scoring_details_table", "overview_details_table");
+      qs("#ScoreNFLDetails table")?.classList.add("box_details_table");
+  
+      setHTML(qs("#leftTeam"), ""); 
+      setHTML(qs("#rightTeam"), "");
+      qs("#leftTeam")?.append(...left);
+      qs("#rightTeam")?.append(...right);
+  
+      // strip PRINTER
+      replaceAllIn(qs("#ScoreNFLDetails"),
+        '#ScoreNFLDetails td a[class*="position_"]',
+        (node) => node.setAttribute('href', node.getAttribute('href').replace('&PRINTER=1', ''))
+      );
+  
+      qs("#teamToggles .leftT input").value  = leftCap;
+      qs("#teamToggles .rightT input").value = rightCap;
+  
+      qsa('a[href*="&MATCHUP=%2CFA"],a[href*="MATCHUP=FA%2C"]', qs("#ScoreNFLDetails")).forEach(el => el.remove()); // $$ → qsa
+  
+      setHTML(qs("#ScoreDetails tbody"), "");
+      hide(qs("#ScoreDetails")); 
+      show(qs(".scoredetailsWrap")); 
+      show(qs("#ScoreNFLDetails"));
+      try { bodyScrollLock.disableBodyScroll(qs("#ScoreNFLDetails")); } catch (_) {}
+  
+      qs(".leftT")?.addEventListener('click', () => {
+        qs(".leftT").style.opacity = "1"; 
+        qs(".rightT").style.opacity = ".5";
+        show(qs("#leftTeam")); 
+        hide(qs("#rightTeam"));
+      });
+      qs(".rightT")?.addEventListener('click', () => {
+        qs(".rightT").style.opacity = "1"; 
+        qs(".leftT").style.opacity = ".5";
+        show(qs("#rightTeam")); 
+        hide(qs("#leftTeam"));
+      });
+  
+      const closeBtn = qs("#ScoreNFLDetails #MFLPlayerPopupClose");
+      if (closeBtn) {
+        closeBtn.onclick = () => {
+          setHTML(qs("#leftTeam"), ""); 
+          setHTML(qs("#rightTeam"), "");
+          qsa("#teamToggles input").forEach(i => i.value = ""); // $$ → qsa
+          hide(qs(".scoredetailsWrap")); 
+          hide(qs("#ScoreNFLDetails"));
+          try { bodyScrollLock.clearAllBodyScrollLocks(); } catch (_) {}
+          qs("#ScoreNFLDetails table")?.classList.remove("box_details_table");
+          qs("#ScoreDetails table")?.classList.remove("scoring_details_table", "overview_details_table");
+          qsa("a").forEach(a => a.classList.remove("dblClicks")); // $$ → qsa
+        };
+      }
+  
+      try {
+        MFLPlayerPopupNewsIcon("ScoreDetails");
+        MFLPlayerPopupNewsIcon("ScoreNFLDetails");
+      } catch (_) {}
     } catch (err) { console.error("Error:", err); }
-});
-
-
-   // Points summary from Options O=08
-document.body.addEventListener('click', async (ev) => {
+  });
+  
+  
+  // ---------- Points summary from Options O=08 ----------
+  document.body.addEventListener('click', async (ev) => {
     const a = ev.target.closest('.report a[href*="options?L="][href*="O=08"][href*="PLAYER_ID="]:not(#body_options_08 a):not([class*="dblClicks"])');
     if (!a) return;
     ev.preventDefault();
-
+  
     a.classList.add("dblClicks");
     const fs = qs("#fullSeasonPts"); fs && fs.remove();
-    $$(".detailsReportWrap table").forEach(t => t.classList.add("report"));
+    qsa(".detailsReportWrap table").forEach(t => t.classList.add("report")); // $$ → qsa
     qs("#ScoreDetails tbody").insertAdjacentHTML('afterend',
-        `<tbody id="fullSeasonPts">
+      `<tbody id="fullSeasonPts">
         <tr><th colspan="4" style="text-align:center!important">Points Summary</th></tr>
         <tr class="oddtablerow">
           <td style="text-align:right!important">YTD Pts:</td><td class="dYTDpoints" style="text-align:left!important"></td>
@@ -1610,90 +1717,90 @@ document.body.addEventListener('click', async (ev) => {
         <tr><th colspan="4" style="text-align:center!important">Weekly Point Totals</th></tr>
       </tbody>`
     );
-
+  
     try {
-        const html = await fetchText(`${a.getAttribute('href')}&PRINTER=1`);
-        const doc = parseHTML(html);
-
-        qs("#ScoreDetails caption span").innerHTML = qs(".report tbody td.player a", doc)?.innerHTML || "";
-
-        // move totals/avg
-        const ytd = qs(".report td.points.tot", doc); 
-        if (ytd) qs(".dYTDpoints")?.append(ytd.cloneNode(true).childNodes[0] || "");
-        const avg = qs(".report td.points.avg", doc); 
-        if (avg) qs(".dAVGpoints")?.append(avg.cloneNode(true).childNodes[0] || "");
-
-        // build weekly rows
-        const headerLink = qs('table.report tr:nth-child(2) th:nth-child(5) a', doc);
-        let aHtml = "";
-        const thLinks = qsa('.report tbody th a[href*="SORT"]:not([href*="SORT=NAME"]):not([href*="SORT=TOT"]):not([href*="SORT=AVG"]):not([href*="SORT=SALARY"]):not([href*="SORT=YEAR"])', doc);
-        const tlen = thLinks.length;
-        const href = headerLink?.getAttribute('href') || "";
-        const startSort = parseInt(href.slice(href.indexOf("SORT=") + 5, href.indexOf("SORT=") + 7)) || 0;
-
-        for (let i = 5; i < tlen + 5; i++) {
-            if (i % 2 === 1) aHtml += `<tr class="dRow">`;
-            const weekNum = (startSort + i - 5);
-            const cellHTML = qs(`table.report td:nth-child(${i})`, doc)?.innerHTML ?? "";
-            aHtml += `<td style="text-align:right!important">Week ${weekNum}:</td>`;
-            aHtml += `<td style="text-align:left!important">${cellHTML}</td>`;
-            if (i % 2 === 0) aHtml += `</tr>`;
-        }
-        qs("#fullSeasonPts").insertAdjacentHTML('beforeend', aHtml);
-
-        // cleanup table styles
-        qsa(`#ScoreDetails th a`).forEach(x => x.removeAttribute('href'));
-        $$('a[href*="&MATCHUP=%2CFA"],a[href*="MATCHUP=FA%2C"]', qs("#ScoreDetails")).forEach(x => x.remove());
-        qs("#ScoreNFLDetails table")?.classList.remove("box_details_table");
-        const sdt = qs("#ScoreDetails table");
-        sdt?.classList.remove("scoring_details_table");
-        sdt?.classList.add("overview_details_table");
-
-        try { MFLPlayerPopupNewsIcon("ScoreDetails"); } catch (_) { }
-
-        // unwrap YTD/AVG anchors
-        qsa(`#ScoreDetails td.dYTDpoints a, #ScoreDetails td.dAVGpoints a`).forEach(anchor => {
-            const frag = document.createDocumentFragment();
-            while (anchor.firstChild) frag.appendChild(anchor.firstChild);
-            anchor.replaceWith(frag);
-        });
-
-        show(qs(".scoredetailsWrap")); show(qs("#ScoreDetails"));
-        setHTML(qs("#leftTeam"), ""); setHTML(qs("#rightTeam"), "");
-        qsa("#teamToggles input").forEach(i => i.value = "");
-        hide(qs("#ScoreNFLDetails")); hide(qs("#TeamDetails")); hide(qs(".teamdetailsWrap"));
-
-        try { bodyScrollLock.disableBodyScroll(qs("#ScoreDetails")); } catch (_) { }
-
-        const closeBtn = qs("#ScoreDetails #MFLPlayerPopupClose");
-        if (closeBtn) {
-            closeBtn.onclick = () => {
-                const fs2 = qs("#fullSeasonPts"); fs2 && fs2.remove();
-                setHTML(qs("#ScoreDetails tbody"), "");
-                hide(qs(".scoredetailsWrap")); hide(qs("#ScoreDetails"));
-                try { bodyScrollLock.clearAllBodyScrollLocks(); } catch (_) { }
-                qs("#ScoreNFLDetails table")?.classList.remove("box_details_table");
-                qs("#ScoreDetails table")?.classList.remove("scoring_details_table", "overview_details_table");
-                qsa("a").forEach(a => a.classList.remove("dblClicks"));
-            };
-        }
-
-        // text replacements
-        qsa("#fullSeasonPts td").forEach(td => {
-            td.innerHTML = td.innerHTML.replace(/&nbsp;/g, "0").replace(/B/g, "Bye");
-        });
-
-        // strip images from YTD
-        qsa("td.dYTDpoints img").forEach(img => img.remove());
-
-        // zebra rows + fill last row
-        qsa("#fullSeasonPts tr.dRow").forEach((tr, idx) => tr.classList.add(idx % 2 ? "oddtablerow" : "eventablerow"));
-        const last = qs("#fullSeasonPts tr:last-child");
-        if (last && last.children.length < 3) { last.insertAdjacentHTML('beforeend', "<td></td><td></td>"); }
-
+      const html = await fetchText(`${a.getAttribute('href')}&PRINTER=1`);
+      const doc  = parseHTML(html);
+  
+      qs("#ScoreDetails caption span").innerHTML = qs(".report tbody td.player a", doc)?.innerHTML || "";
+  
+      // move totals/avg
+      const ytd = qs(".report td.points.tot", doc); 
+      if (ytd) qs(".dYTDpoints")?.append(ytd.cloneNode(true).childNodes[0] || "");
+      const avg = qs(".report td.points.avg", doc); 
+      if (avg) qs(".dAVGpoints")?.append(avg.cloneNode(true).childNodes[0] || "");
+  
+      // build weekly rows
+      const headerLink = qs('table.report tr:nth-child(2) th:nth-child(5) a', doc);
+      let aHtml = "";
+      const thLinks   = qsa('.report tbody th a[href*="SORT"]:not([href*="SORT=NAME"]):not([href*="SORT=TOT"]):not([href*="SORT=AVG"]):not([href*="SORT=SALARY"]):not([href*="SORT=YEAR"])', doc);
+      const tlen      = thLinks.length;
+      const href      = headerLink?.getAttribute('href') || "";
+      const startSort = parseInt(href.slice(href.indexOf("SORT=") + 5, href.indexOf("SORT=") + 7)) || 0;
+  
+      for (let i = 5; i < tlen + 5; i++) {
+        if (i % 2 === 1) aHtml += `<tr class="dRow">`;
+        const weekNum  = (startSort + i - 5);
+        const cellHTML = qs(`table.report td:nth-child(${i})`, doc)?.innerHTML ?? "";
+        aHtml += `<td style="text-align:right!important">Week ${weekNum}:</td>`;
+        aHtml += `<td style="text-align:left!important">${cellHTML}</td>`;
+        if (i % 2 === 0) aHtml += `</tr>`;
+      }
+      qs("#fullSeasonPts").insertAdjacentHTML('beforeend', aHtml);
+  
+      // cleanup table styles
+      qsa(`#ScoreDetails th a`).forEach(x => x.removeAttribute('href'));
+      qsa('a[href*="&MATCHUP=%2CFA"],a[href*="MATCHUP=FA%2C"]', qs("#ScoreDetails")).forEach(x => x.remove()); // $$ → qsa
+      qs("#ScoreNFLDetails table")?.classList.remove("box_details_table");
+      const sdt = qs("#ScoreDetails table");
+      sdt?.classList.remove("scoring_details_table");
+      sdt?.classList.add("overview_details_table");
+  
+      try { MFLPlayerPopupNewsIcon("ScoreDetails"); } catch (_) {}
+  
+      // unwrap YTD/AVG anchors
+      qsa(`#ScoreDetails td.dYTDpoints a, #ScoreDetails td.dAVGpoints a`).forEach(anchor => {
+        const frag = document.createDocumentFragment();
+        while (anchor.firstChild) frag.appendChild(anchor.firstChild);
+        anchor.replaceWith(frag);
+      });
+  
+      show(qs(".scoredetailsWrap")); show(qs("#ScoreDetails"));
+      setHTML(qs("#leftTeam"), ""); setHTML(qs("#rightTeam"), "");
+      qsa("#teamToggles input").forEach(i => i.value = "");
+      hide(qs("#ScoreNFLDetails")); hide(qs("#TeamDetails")); hide(qs(".teamdetailsWrap"));
+  
+      try { bodyScrollLock.disableBodyScroll(qs("#ScoreDetails")); } catch (_) {}
+  
+      const closeBtn = qs("#ScoreDetails #MFLPlayerPopupClose");
+      if (closeBtn) {
+        closeBtn.onclick = () => {
+          const fs2 = qs("#fullSeasonPts"); fs2 && fs2.remove();
+          setHTML(qs("#ScoreDetails tbody"), "");
+          hide(qs(".scoredetailsWrap")); hide(qs("#ScoreDetails"));
+          try { bodyScrollLock.clearAllBodyScrollLocks(); } catch (_) {}
+          qs("#ScoreNFLDetails table")?.classList.remove("box_details_table");
+          qs("#ScoreDetails table")?.classList.remove("scoring_details_table", "overview_details_table");
+          qsa("a").forEach(a => a.classList.remove("dblClicks"));
+        };
+      }
+  
+      // text replacements
+      qsa("#fullSeasonPts td").forEach(td => {
+        td.innerHTML = td.innerHTML.replace(/&nbsp;/g, "0").replace(/B/g, "Bye");
+      });
+  
+      // strip images from YTD
+      qsa("td.dYTDpoints img").forEach(img => img.remove());
+  
+      // zebra rows + fill last row
+      qsa("#fullSeasonPts tr.dRow").forEach((tr, idx) => tr.classList.add(idx % 2 ? "oddtablerow" : "eventablerow"));
+      const last = qs("#fullSeasonPts tr:last-child");
+      if (last && last.children.length < 3) { last.insertAdjacentHTML('beforeend', "<td></td><td></td>"); }
+  
     } catch (err) { console.error("Error:", err); }
-});
-}
+  });
+  }  
 
 
 
@@ -1826,39 +1933,40 @@ addStyle(`
 .team_schedule_table img{width:auto;height:1.875rem}
 `);
 
-// Remove tabs based on flags
+// --- Remove tabs based on flags (fix IDs) ---
 if (removeSchedule) {
-qs("#frachiseScheduleTab")?.remove();
-qsa(".team_schedule_table").forEach(el => el.remove());
-}
-if (removeWatchlist) {
-qs("#frachiseWatchTab")?.remove();
-qsa(".team_watch_table").forEach(el => el.remove());
-}
-if (removeLineup) {
-qs("#frachiseLineupTab")?.remove();
-qsa(".team_lineup_table").forEach(el => el.remove());
-}
+    qs("#franchiseScheduleTab")?.remove();
+    qsa(".team_schedule_table").forEach(el => el.remove());
+  }
+  if (removeWatchlist) {
+    qs("#franchiseWatchTab")?.remove();
+    qsa(".team_watch_table").forEach(el => el.remove());
+  }
+  if (removeLineup) {
+    qs("#franchiseLineupTab")?.remove();
+    qsa(".team_lineup_table").forEach(el => el.remove());
+  }
 if (hideLinks) {
 qs("#teamLinks #propose_trade_link")?.remove();
 qs("#teamLinks #trade_bait_link")?.remove();
 qs("#teamLinks #transactions_link")?.remove();
 }
 
-// Overlay close
+// --- Overlay close (remove both dblClick variants) ---
 document.body.addEventListener('click', (ev) => {
-if (!ev.target.classList.contains('teamdetailsWrap')) return;
-qsa("#TeamDetails .TeamData").forEach(t => t.innerHTML = "");
-hide(qs(".teamdetailsWrap"));
-hide(qs("#TeamDetails"));
-qs("#MFLPlayerPopupContainer #MFLPlayerPopupClose")?.classList.remove("teamdetails_activated");
-qs("#MFLPlayerPopupOverlay")?.classList.remove("teamdetails_activated");
-qs("#ScoreDetails #MFLPlayerPopupClose")?.classList.remove("scoredetails_activated");
-qs("#ScoreNFLDetails #MFLPlayerPopupClose")?.classList.remove("scoredetails_activated");
-qs(".scoredetailsWrap")?.classList.remove("scoredetails_activated");
-qsa("a").forEach(a => a.classList.remove("dblClick"));
-try { bodyScrollLock.clearAllBodyScrollLocks(); } catch (_) { }
-});
+    if (!ev.target.classList.contains('teamdetailsWrap')) return;
+    qsa("#TeamDetails .TeamData").forEach(t => t.innerHTML = "");
+    hide(qs(".teamdetailsWrap"));
+    hide(qs("#TeamDetails"));
+    qs("#MFLPlayerPopupContainer #MFLPlayerPopupClose")?.classList.remove("teamdetails_activated");
+    qs("#MFLPlayerPopupOverlay")?.classList.remove("teamdetails_activated");
+    qs("#ScoreDetails #MFLPlayerPopupClose")?.classList.remove("scoredetails_activated");
+    qs("#ScoreNFLDetails #MFLPlayerPopupClose")?.classList.remove("scoredetails_activated");
+    qs(".scoredetailsWrap")?.classList.remove("scoredetails_activated");
+    qsa("a").forEach(a => { a.classList.remove("dblClick"); a.classList.remove("dblClicks"); });
+    try { bodyScrollLock.clearAllBodyScrollLocks(); } catch (_) { }
+  });
+  
 
    // Open overlay if already flagged active
 document.body.addEventListener('click', (ev) => {
@@ -1868,40 +1976,34 @@ document.body.addEventListener('click', (ev) => {
     try { bodyScrollLock.disableBodyScroll(qs("#TeamDetails")); } catch (_) { }
   });
   
-  // Tab switching inside TeamDetails
-  function switchTab(showSelector) {
-    qsa("#TeamDetails li.MFLPlayerPopupPlayerTabs a").forEach(a => a.classList.remove("active"));
-    qsa(".TeamData").forEach(t => hide(t));
-    show(qs(showSelector));
-  }
-  
-  document.body.addEventListener('click', (ev) => {
-    if (ev.target.closest('#TeamDetails li#frachiseRostersTab')) {
+ // --- Tab switching inside TeamDetails (fix IDs) ---
+document.body.addEventListener('click', (ev) => {
+    if (ev.target.closest('#TeamDetails li#franchiseRostersTab')) {
       switchTab(".team_roster_table");
-      qs("#TeamDetails li#frachiseRostersTab a")?.classList.add("active");
+      qs("#TeamDetails li#franchiseRostersTab a")?.classList.add("active");
     }
   });
   document.body.addEventListener('click', (ev) => {
-    if (ev.target.closest('#TeamDetails li#frachiseBioTab')) {
+    if (ev.target.closest('#TeamDetails li#franchiseBioTab')) {
       switchTab(".team_bio_table");
-      qs("#TeamDetails li#frachiseBioTab a")?.classList.add("active");
+      qs("#TeamDetails li#franchiseBioTab a")?.classList.add("active");
     }
   });
   document.body.addEventListener('click', (ev) => {
-    if (ev.target.closest('#TeamDetails li#frachiseScheduleTab')) {
+    if (ev.target.closest('#TeamDetails li#franchiseScheduleTab')) {
       switchTab(".team_schedule_table");
-      qs("#TeamDetails li#frachiseScheduleTab a")?.classList.add("active");
+      qs("#TeamDetails li#franchiseScheduleTab a")?.classList.add("active");
     }
   });
   document.body.addEventListener('click', (ev) => {
-    if (ev.target.closest('#TeamDetails li#frachiseAwardsTab')) {
+    if (ev.target.closest('#TeamDetails li#franchiseAwardsTab')) {
       switchTab(".team_awards_table");
-      qs("#TeamDetails li#frachiseAwardsTab a")?.classList.add("active");
+      qs("#TeamDetails li#franchiseAwardsTab a")?.classList.add("active");
     }
   });
   
-  // Close X
-  document.body.addEventListener('click', (ev) => {
+ // --- Close X (remove both dblClick variants) ---
+document.body.addEventListener('click', (ev) => {
     if (ev.target.id !== "MFLPlayerPopupClose") return;
     qsa("#TeamDetails .TeamData").forEach(t => t.innerHTML = "");
     hide(qs(".teamdetailsWrap"));
@@ -1912,8 +2014,21 @@ document.body.addEventListener('click', (ev) => {
     qs("#ScoreDetails #MFLPlayerPopupClose")?.classList.remove("scoredetails_activated");
     qs("#ScoreNFLDetails #MFLPlayerPopupClose")?.classList.remove("scoredetails_activated");
     qs(".scoredetailsWrap")?.classList.remove("scoredetails_activated");
-    qsa("a").forEach(a => a.classList.remove("dblClick"));
+    qsa("a").forEach(a => { a.classList.remove("dblClick"); a.classList.remove("dblClicks"); });
   });
+  
+  // --- Default active tab (fix ID) ---
+  qsa("#TeamDetails li.MFLPlayerPopupPlayerTabs a").forEach(a => a.classList.remove("active"));
+  qs("#TeamDetails #franchiseBioTab a")?.classList.add("active");
+  
+  // --- Lineup tab click (fix ID) ---
+  document.body.addEventListener('click', (ev) => {
+    if (!ev.target.closest('#TeamDetails li#franchiseLineupTab')) return;
+    switchTab(".team_lineup_table");
+    qs("#TeamDetails li#franchiseLineupTab a")?.classList.add("active");
+    // (rest unchanged)
+  });
+  
   
   // ------------------ OPEN FRANCHISE POPUP (main entry) ------------------
   function openFranchisePopup(hrefEl) {
@@ -2120,23 +2235,23 @@ document.body.addEventListener('click', (ev) => {
     });
   });
   
-  // Other tabs (Options / News / Watch)
-  document.body.addEventListener('click', (ev) => {
-    if (ev.target.closest('#TeamDetails li#frachiseOptionsTab')) {
+  // --- Other tabs (Options / News / Watch) (fix IDs) ---
+document.body.addEventListener('click', (ev) => {
+    if (ev.target.closest('#TeamDetails li#franchiseOptionsTab')) {
       switchTab(".team_options_table");
-      qs("#TeamDetails li#frachiseOptionsTab a")?.classList.add("active");
+      qs("#TeamDetails li#franchiseOptionsTab a")?.classList.add("active");
     }
   });
   document.body.addEventListener('click', (ev) => {
-    if (ev.target.closest('#TeamDetails li#frachiseNewsTab')) {
+    if (ev.target.closest('#TeamDetails li#franchiseNewsTab')) {
       switchTab(".team_news_table");
-      qs("#TeamDetails li#frachiseNewsTab a")?.classList.add("active");
+      qs("#TeamDetails li#franchiseNewsTab a")?.classList.add("active");
     }
   });
   document.body.addEventListener('click', (ev) => {
-    if (ev.target.closest('#TeamDetails li#frachiseWatchTab')) {
+    if (ev.target.closest('#TeamDetails li#franchiseWatchTab')) {
       switchTab(".team_watch_table");
-      qs("#TeamDetails li#frachiseWatchTab a")?.classList.add("active");
+      qs("#TeamDetails li#franchiseWatchTab a")?.classList.add("active");
     }
   });
-}  
+}
